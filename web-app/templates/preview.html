@@ -224,16 +224,16 @@
   <script>
     // 传递文件信息到JavaScript
     const fileInfo = {{ file_info| tojson }};
-    
+
     // 简化的导入处理
-    document.getElementById('startImportBtn')?.addEventListener('click', function() {
+    document.getElementById('startImportBtn')?.addEventListener('click', function () {
       const button = this;
       const originalText = button.innerHTML;
-      
+
       // 禁用按钮并显示加载状态
       button.disabled = true;
       button.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>正在导入...';
-      
+
       // 获取配置
       const config = {
         file_path: document.getElementById('filePath').value,
@@ -241,7 +241,7 @@
         validate_data: document.getElementById('validateData').checked,
         skip_duplicates: document.getElementById('skipDuplicates').checked
       };
-      
+
       // 发送导入请求
       fetch('{{ url_for("configure") }}', {
         method: 'POST',
@@ -250,51 +250,51 @@
         },
         body: JSON.stringify(config)
       })
-      .then(response => response.json())
-      .then(data => {
-        button.disabled = false;
-        button.innerHTML = originalText;
-        
-        if (data.success) {
-          // 显示成功消息
-          const alertDiv = document.createElement('div');
-          alertDiv.className = 'alert alert-success alert-dismissible fade show mt-3';
-          alertDiv.innerHTML = `
+        .then(response => response.json())
+        .then(data => {
+          button.disabled = false;
+          button.innerHTML = originalText;
+
+          if (data.success) {
+            // 显示成功消息
+            const alertDiv = document.createElement('div');
+            alertDiv.className = 'alert alert-success alert-dismissible fade show mt-3';
+            alertDiv.innerHTML = `
             <i class="fas fa-check-circle me-1"></i>
             <strong>导入成功！</strong> ${data.message}
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
           `;
-          button.parentNode.appendChild(alertDiv);
-          
-          // 3秒后跳转到首页
-          setTimeout(() => {
-            window.location.href = '{{ url_for("index") }}';
-          }, 3000);
-        } else {
-          // 显示错误消息
-          const alertDiv = document.createElement('div');
-          alertDiv.className = 'alert alert-danger alert-dismissible fade show mt-3';
-          alertDiv.innerHTML = `
+            button.parentNode.appendChild(alertDiv);
+
+            // 3秒后跳转到首页
+            setTimeout(() => {
+              window.location.href = '{{ url_for("index") }}';
+            }, 3000);
+          } else {
+            // 显示错误消息
+            const alertDiv = document.createElement('div');
+            alertDiv.className = 'alert alert-danger alert-dismissible fade show mt-3';
+            alertDiv.innerHTML = `
             <i class="fas fa-exclamation-triangle me-1"></i>
             <strong>导入失败：</strong> ${data.error}
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
           `;
-          button.parentNode.appendChild(alertDiv);
-        }
-      })
-      .catch(error => {
-        button.disabled = false;
-        button.innerHTML = originalText;
-        
-        const alertDiv = document.createElement('div');
-        alertDiv.className = 'alert alert-danger alert-dismissible fade show mt-3';
-        alertDiv.innerHTML = `
+            button.parentNode.appendChild(alertDiv);
+          }
+        })
+        .catch(error => {
+          button.disabled = false;
+          button.innerHTML = originalText;
+
+          const alertDiv = document.createElement('div');
+          alertDiv.className = 'alert alert-danger alert-dismissible fade show mt-3';
+          alertDiv.innerHTML = `
           <i class="fas fa-times-circle me-1"></i>
           <strong>请求失败：</strong> ${error.message}
           <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         `;
-        button.parentNode.appendChild(alertDiv);
-      });
+          button.parentNode.appendChild(alertDiv);
+        });
     });
   </script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>

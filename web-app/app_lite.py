@@ -216,3 +216,6 @@ def generate_postgres_insert(table, data):
 
 if __name__ == '__main__':
     app.run(debug=True)
+
+# Vercel entry point
+application = app
