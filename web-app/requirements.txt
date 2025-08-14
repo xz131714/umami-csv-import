@@ -1,0 +1,2 @@
+# Vercel Serverless Functions
+# 使用Python标准库，无外部依赖
