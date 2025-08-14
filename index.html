@@ -188,7 +188,7 @@
 
 <body>
   <div class="header">
-    <h1>🚀 Umami 数据导入助手</h1>
+    <h1>🚀 Umami 数据导入Python脚本生成助手</h1>
     <p class="subtitle">快速、安全、专业的 CSV 数据迁移工具</p>
   </div>
 
@@ -283,11 +283,11 @@
         document.querySelectorAll('.db-type-btn').forEach(b => b.classList.remove('active'));
         // 添加active类到当前按钮
         this.classList.add('active');
-        
+
         // 更新隐藏字段值
         const dbType = this.dataset.type;
         document.getElementById('db_type').value = dbType;
-        
+
         // 更新端口值和提示
         const port = document.getElementById('port');
         if (dbType === 'mysql') {
