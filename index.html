@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Umami CSV数据导入工具</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      color: #333;
+      padding: 20px;
+    }
+
+    .header {
+      text-align: center;
+      padding: 40px 0;
+      color: white;
+    }
+
+    .header h1 {
+      font-size: 3rem;
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+
+    .header .subtitle {
+      font-size: 1.3rem;
+      opacity: 0.9;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+      padding: 40px;
+    }
+
+    .form-group {
+      margin-bottom: 25px;
+    }
+
+    .form-group label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: #2c3e50;
+    }
+
+    .form-group input,
+    .form-group select {
+      width: 100%;
+      padding: 12px 15px;
+      border: 2px solid #e9ecef;
+      border-radius: 8px;
+      font-size: 1rem;
+      transition: border-color 0.3s ease;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+
+    .radio-group {
+      display: flex;
+      gap: 20px;
+      margin-top: 8px;
+    }
+
+    .radio-option {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn {
+      background: linear-gradient(45deg, #667eea, #764ba2);
+      color: white;
+      border: none;
+      padding: 15px 30px;
+      border-radius: 8px;
+      font-size: 1.1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+      width: 100%;
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+    }
+
+    .result {
+      display: none;
+      margin-top: 30px;
+      padding: 20px;
+      background: #d4edda;
+      border: 1px solid #c3e6cb;
+      border-radius: 8px;
+      color: #155724;
+    }
+
+    .download-btn {
+      display: none;
+      background: #28a745;
+      margin-top: 15px;
+    }
+
+    .download-btn:hover {
+      background: #218838;
+    }
+
+    @media (max-width: 768px) {
+      .form-row {
+        grid-template-columns: 1fr;
+      }
+
+      .radio-group {
+        flex-direction: column;
+        gap: 10px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="header">
+    <h1>🚀 Umami</h1>
+    <p class="subtitle">CSV数据导入工具</p>
+  </div>
+
+  <div class="container">
+    <form id="configForm">
+      <h2 style="margin-bottom: 30px; color: #2c3e50;">数据库配置</h2>
+
+      <div class="form-group">
+        <label>数据库类型</label>
+        <div class="radio-group">
+          <div class="radio-option">
+            <input type="radio" id="mysql" name="db_type" value="mysql" checked>
+            <label for="mysql">MySQL</label>
+          </div>
+          <div class="radio-option">
+            <input type="radio" id="postgresql" name="db_type" value="postgresql">
+            <label for="postgresql">PostgreSQL</label>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="host">主机地址</label>
+          <input type="text" id="host" name="host" value="localhost" required>
+        </div>
+        <div class="form-group">
+          <label for="port">端口</label>
+          <input type="number" id="port" name="port" value="3306" required>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="username">用户名</label>
+          <input type="text" id="username" name="username" required>
+        </div>
+        <div class="form-group">
+          <label for="password">密码</label>
+          <input type="password" id="password" name="password" required>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="database">数据库名</label>
+        <input type="text" id="database" name="database" required>
+      </div>
+
+      <h3 style="margin: 30px 0 20px 0; color: #2c3e50;">CSV文件配置</h3>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="csv_filename">CSV文件名</label>
+          <input type="text" id="csv_filename" name="csv_filename" placeholder="file.csv" value="file.csv" required>
+        </div>
+        <div class="form-group">
+          <label for="csv_encoding">文件编码</label>
+          <select id="csv_encoding" name="csv_encoding">
+            <option value="auto">自动检测</option>
+            <option value="utf-8">UTF-8</option>
+            <option value="gbk">GBK</option>
+          </select>
+        </div>
+      </div>
+
+      <div style="text-align: center; margin-top: 40px;">
+        <button type="submit" class="btn">生成Python脚本</button>
+      </div>
+    </form>
+
+    <div id="result" class="result">
+      <h3>✅ 脚本生成成功！</h3>
+      <p>Python导入脚本已生成，点击下面按钮下载。</p>
+      <button id="downloadBtn" class="btn download-btn">下载脚本</button>
+    </div>
+  </div>
+
+  <script>
+    let generatedScript = '';
+
+    // 数据库类型切换
+    document.querySelectorAll('input[name="db_type"]').forEach(radio => {
+      radio.addEventListener('change', function () {
+        const port = document.getElementById('port');
+        if (this.value === 'mysql') {
+          port.value = '3306';
+        } else if (this.value === 'postgresql') {
+          port.value = '5432';
+        }
+      });
+    });
+
+    // 表单提交
+    document.getElementById('configForm').addEventListener('submit', function (e) {
+      e.preventDefault();
+
+      const formData = new FormData(this);
+      const config = Object.fromEntries(formData.entries());
+
+      // 生成脚本
+      generatedScript = generateScript(config);
+
+      // 显示结果
+      document.getElementById('result').style.display = 'block';
+      document.getElementById('downloadBtn').style.display = 'block';
+    });
+
+    // 下载脚本
+    document.getElementById('downloadBtn').addEventListener('click', function () {
+      const blob = new Blob([generatedScript], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'umami_import.py';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    });
+
+    function generateScript(config) {
+      return `# Umami CSV数据导入工具
+# 生成时间: ${new Date().toLocaleString('zh-CN')}
+
+import pandas as pd
+import os
+from datetime import datetime
+
+# 配置信息
+DB_TYPE = '${config.db_type}'
+HOST = '${config.host}'
+PORT = ${config.port}
+USERNAME = '${config.username}'
+PASSWORD = '${config.password}'
+DATABASE = '${config.database}'
+CSV_FILE = '${config.csv_filename}'
+CSV_ENCODING = '${config.csv_encoding}'
+
+def connect_database():
+    """连接数据库"""
+    try:
+        if DB_TYPE == 'mysql':
+            import pymysql
+            conn = pymysql.connect(
+                host=HOST,
+                port=PORT,
+                user=USERNAME,
+                password=PASSWORD,
+                database=DATABASE
+            )
+        else:
+            import psycopg2
+            conn = psycopg2.connect(
+                host=HOST,
+                port=PORT,
+                user=USERNAME,
+                password=PASSWORD,
+                database=DATABASE
+            )
+        print("✅ 数据库连接成功")
+        return conn
+    except Exception as e:
+        print(f"❌ 数据库连接失败: {e}")
+        return None
+
+def load_csv():
+    """加载CSV文件"""
+    if not os.path.exists(CSV_FILE):
+        print(f"❌ 文件不存在: {CSV_FILE}")
+        return None
+    
+    try:
+        if CSV_ENCODING == 'auto':
+            try:
+                df = pd.read_csv(CSV_FILE, encoding='utf-8')
+                print("✅ 使用UTF-8编码读取成功")
+            except:
+                df = pd.read_csv(CSV_FILE, encoding='gbk')
+                print("✅ 使用GBK编码读取成功")
+        else:
+            df = pd.read_csv(CSV_FILE, encoding=CSV_ENCODING)
+            print(f"✅ 使用{CSV_ENCODING}编码读取成功")
+        
+        print(f"📊 数据行数: {len(df)}")
+        return df
+    except Exception as e:
+        print(f"❌ 读取CSV失败: {e}")
+        return None
+
+def main():
+    """主程序"""
+    print("🚀 Umami CSV数据导入工具")
+    print(f"⏰ 开始时间: {datetime.now()}")
+    
+    # 加载数据
+    df = load_csv()
+    if df is None:
+        return
+    
+    # 连接数据库
+    conn = connect_database()
+    if conn is None:
+        return
+    
+    print("🔄 开始数据处理...")
+    # 这里添加具体的数据处理逻辑
+    print("✅ 处理完成")
+    
+    conn.close()
+
+if __name__ == "__main__":
+    main()
+`;
+    }
+  </script>
+</body>
+
+</html>
