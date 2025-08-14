@@ -55,7 +55,8 @@ class handler(BaseHTTPRequestHandler):
                     <li>生成SQL语句或直接导入</li>
                 </ol>
                 
-                <button onclick="alert('功能开发中...')">开始使用</button>
+                <button onclick="window.open('/api/upload', '_blank')">📁 上传文件</button>
+                <button onclick="window.open('/api/status', '_blank')" style="background: #059669; margin-left: 10px;">📊 部署状态</button>
                 
                 <hr style="margin: 30px 0;">
                 <small>

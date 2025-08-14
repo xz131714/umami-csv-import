@@ -1,10 +1,10 @@
-# Render.com 部署配置
+# Render.com 部署配置 - 完整版Flask应用
 services:
 - type: web
   name: umami-csv-import
   env: python
   plan: free
-  buildCommand: pip install -r requirements.txt
+  buildCommand: pip install -r requirements_full.txt
   startCommand: gunicorn app:app
   envVars:
   - key: FLASK_ENV
