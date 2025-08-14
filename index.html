@@ -68,47 +68,28 @@
         </div>
         
         <div class="platform-info">
-            <p id="platform-info">检测部署平台中...</p>
+            <p id="platform-info">⚡ Cloudflare Pages 部署</p>
         </div>
         
         <div class="nav-links">
-            <a href="/api/upload" class="nav-link" id="vercel-upload">📤 Vercel上传</a>
-            <a href="/api/status" class="nav-link" id="vercel-status">📊 Vercel状态</a>
-            <a href="/functions/upload" class="nav-link" id="cf-upload">📤 CF上传</a>
-            <a href="/functions/status" class="nav-link" id="cf-status">📊 CF状态</a>
+            <a href="/functions/" class="nav-link">🏠 主页</a>
+            <a href="/functions/upload" class="nav-link">📤 上传文件</a>
+            <a href="/functions/status" class="nav-link">📊 查看状态</a>
         </div>
         
         <div style="margin-top: 30px; color: #666;">
-            <p><strong>使用说明：</strong></p>
-            <p>• 如果是Vercel部署，点击"Vercel"按钮</p>
-            <p>• 如果是Cloudflare Pages，点击"CF"按钮</p>
-            <p>• 或者直接访问 <a href="/functions/">CF主页</a></p>
+            <p><strong>功能介绍：</strong></p>
+            <p>• 📊 解析CSV文件并生成Umami兼容的SQL</p>
+            <p>• 🔄 支持多种编码格式和数据类型</p>
+            <p>• ⚡ 基于Cloudflare Pages边缘计算</p>
         </div>
     </div>
 
     <script>
-        // 检测部署平台并高亮对应按钮
-        function detectPlatform() {
-            const hostname = window.location.hostname;
-            const platformInfo = document.getElementById('platform-info');
-            
-            if (hostname.includes('vercel.app')) {
-                platformInfo.innerHTML = '🚀 当前环境：Vercel部署 - 推荐使用Vercel按钮';
-                // 高亮Vercel按钮
-                document.getElementById('vercel-upload').style.background = 'linear-gradient(45deg, #27ae60, #219a52)';
-                document.getElementById('vercel-status').style.background = 'linear-gradient(45deg, #27ae60, #219a52)';
-            } else if (hostname.includes('pages.dev')) {
-                platformInfo.innerHTML = '⚡ 当前环境：Cloudflare Pages - 推荐使用CF按钮';
-                // 高亮CF按钮
-                document.getElementById('cf-upload').style.background = 'linear-gradient(45deg, #27ae60, #219a52)';
-                document.getElementById('cf-status').style.background = 'linear-gradient(45deg, #27ae60, #219a52)';
-            } else {
-                platformInfo.innerHTML = '🔍 未知环境 - 请尝试不同按钮';
-            }
-        }
-        
-        // 页面加载时检测平台
-        detectPlatform();
+        // 简单的页面初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Umami CSV导入工具已加载 - Cloudflare Pages版本');
+        });
     </script>
 </body>
 </html>
