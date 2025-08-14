@@ -1,5 +1,7 @@
 def on_request(context):
     """Cloudflare Pages主页函数"""
+    
+    # 返回Response对象
     html = """<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -156,4 +158,5 @@ def on_request(context):
 </body>
 </html>"""
     
+    # 设置正确的响应头
     return html
