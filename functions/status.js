@@ -96,8 +96,8 @@ export async function onRequest(context) {
     </div>
 </body>
 </html>`, {
-      headers: {
-        'Content-Type': 'text/html; charset=utf-8',
-      },
-    });
+    headers: {
+      'Content-Type': 'text/html; charset=utf-8',
+    },
+  });
 }

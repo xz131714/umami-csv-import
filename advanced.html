@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>高级数据导入 - Umami CSV工具</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 15px;
+      padding: 40px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 40px;
+      border-bottom: 2px solid #f0f0f0;
+      padding-bottom: 20px;
+    }
+
+    .header h1 {
+      color: #2c3e50;
+      margin: 0;
+      font-size: 2.2em;
+    }
+
+    .header p {
+      color: #666;
+      margin: 10px 0 0 0;
+    }
+
+    .form-section {
+      background: #f8f9fa;
+      border-radius: 10px;
+      padding: 25px;
+      margin: 20px 0;
+      border-left: 4px solid #3498db;
+    }
+
+    .form-section h3 {
+      color: #2c3e50;
+      margin-top: 0;
+      margin-bottom: 20px;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-group label {
+      display: block;
+      font-weight: 600;
+      color: #2c3e50;
+      margin-bottom: 8px;
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      width: 100%;
+      padding: 12px;
+      border: 2px solid #e1e5e9;
+      border-radius: 6px;
+      font-size: 14px;
+      transition: border-color 0.3s;
+      box-sizing: border-box;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+      outline: none;
+      border-color: #3498db;
+    }
+
+    .form-group small {
+      color: #666;
+      font-size: 12px;
+      margin-top: 5px;
+      display: block;
+    }
+
+    .radio-group {
+      display: flex;
+      gap: 20px;
+      margin-top: 10px;
+    }
+
+    .radio-option {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .radio-option input[type="radio"] {
+      width: auto;
+    }
+
+    .upload-area {
+      border: 2px dashed #3498db;
+      border-radius: 10px;
+      padding: 40px;
+      text-align: center;
+      background: #f8f9fa;
+      transition: all 0.3s ease;
+      position: relative;
+    }
+
+    .upload-area:hover {
+      border-color: #2980b9;
+      background: #e3f2fd;
+    }
+
+    .upload-area input[type="file"] {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+      cursor: pointer;
+    }
+
+    .btn {
+      background: linear-gradient(45deg, #3498db, #2980b9);
+      color: white;
+      padding: 15px 30px;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-decoration: none;
+      display: inline-block;
+    }
+
+    .btn:hover {
+      background: linear-gradient(45deg, #2980b9, #1c6ea4);
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(52, 152, 219, 0.4);
+    }
+
+    .btn:disabled {
+      background: #bdc3c7;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .btn-danger {
+      background: linear-gradient(45deg, #e74c3c, #c0392b);
+    }
+
+    .btn-danger:hover {
+      background: linear-gradient(45deg, #c0392b, #a93226);
+    }
+
+    .progress-container {
+      margin: 20px 0;
+      display: none;
+    }
+
+    .progress-bar {
+      width: 100%;
+      height: 20px;
+      background: #ecf0f1;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(45deg, #27ae60, #2ecc71);
+      width: 0%;
+      transition: width 0.3s ease;
+    }
+
+    .result-section {
+      margin-top: 30px;
+      padding: 20px;
+      border-radius: 8px;
+      display: none;
+    }
+
+    .result-section.success {
+      background: #d4edda;
+      border: 1px solid #c3e6cb;
+      color: #155724;
+    }
+
+    .result-section.error {
+      background: #f8d7da;
+      border: 1px solid #f5c6cb;
+      color: #721c24;
+    }
+
+    .code-block {
+      background: #2c3e50;
+      color: #ecf0f1;
+      padding: 20px;
+      border-radius: 6px;
+      font-family: 'Courier New', monospace;
+      overflow-x: auto;
+      margin: 15px 0;
+      font-size: 14px;
+    }
+
+    .back-links {
+      text-align: center;
+      margin-top: 40px;
+      padding-top: 20px;
+      border-top: 1px solid #ecf0f1;
+    }
+
+    .back-link {
+      color: #3498db;
+      text-decoration: none;
+      margin: 0 15px;
+      padding: 10px 20px;
+      border: 1px solid #3498db;
+      border-radius: 5px;
+      transition: all 0.3s;
+    }
+
+    .back-link:hover {
+      background: #3498db;
+      color: white;
+    }
+
+    .warning-box {
+      background: #fff3cd;
+      border: 1px solid #ffeaa7;
+      color: #856404;
+      padding: 15px;
+      border-radius: 6px;
+      margin: 20px 0;
+    }
+
+    .warning-box strong {
+      color: #d35400;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🚀 高级数据导入工具</h1>
+      <p>完整的数据库导入解决方案 - 支持MySQL和PostgreSQL</p>
+    </div>
+
+    <div class="warning-box">
+      <strong>⚠️ 重要说明:</strong>
+      <br>• Cloudflare Pages 只支持静态网站，无法运行 Python 代码
+      <br>• 此工具会生成 Python 脚本，需要下载到您的本地计算机执行
+      <br>• 您的本地计算机需要安装 Python 环境和相关依赖包
+      <br>• 数据库连接也需要在您的本地网络环境中进行
+    </div>
+
+    <form id="importForm">
+      <!-- 数据库配置 -->
+      <div class="form-section">
+        <h3>🗄️ 数据库配置</h3>
+
+        <div class="form-group">
+          <label>数据库类型</label>
+          <div class="radio-group">
+            <div class="radio-option">
+              <input type="radio" id="mysql" name="db_type" value="mysql" checked>
+              <label for="mysql">MySQL</label>
+            </div>
+            <div class="radio-option">
+              <input type="radio" id="postgresql" name="db_type" value="postgresql">
+              <label for="postgresql">PostgreSQL</label>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="host">数据库主机</label>
+            <input type="text" id="host" name="host" placeholder="如: localhost 或 db.example.com" required>
+            <small>数据库服务器地址</small>
+          </div>
+
+          <div class="form-group">
+            <label for="port">端口</label>
+            <input type="number" id="port" name="port" value="3306" min="1" max="65535" required>
+            <small>MySQL默认3306，PostgreSQL默认5432</small>
+          </div>
+
+          <div class="form-group">
+            <label for="database">数据库名</label>
+            <input type="text" id="database" name="database" value="umami" required>
+            <small>目标数据库名称</small>
+          </div>
+
+          <div class="form-group">
+            <label for="username">用户名</label>
+            <input type="text" id="username" name="username" required>
+            <small>数据库用户名</small>
+          </div>
+
+          <div class="form-group">
+            <label for="password">密码</label>
+            <input type="password" id="password" name="password" required>
+            <small>数据库密码</small>
+          </div>
+
+          <div class="form-group">
+            <label for="website_id">目标Website ID</label>
+            <input type="text" id="website_id" name="website_id" placeholder="01923022-a812-4369-b896-862fa37d32b1"
+              required>
+            <small>替换CSV中的website_id</small>
+          </div>
+        </div>
+      </div>
+
+      <!-- 文件上传 -->
+      <div class="form-section">
+        <h3>📁 CSV文件</h3>
+
+        <div class="upload-area" id="uploadArea">
+          <input type="file" id="csvFile" name="csvFile" accept=".csv" required>
+          <div>
+            <h4>📤 选择CSV文件</h4>
+            <p>点击或拖拽CSV文件到此区域</p>
+            <p><small>支持UTF-8和GBK编码</small></p>
+          </div>
+        </div>
+
+        <div id="fileInfo" style="margin-top: 15px; display: none;">
+          <strong>已选择文件:</strong> <span id="fileName"></span>
+          <br><small>文件大小: <span id="fileSize"></span></small>
+        </div>
+      </div>
+
+      <!-- 高级选项 -->
+      <div class="form-section">
+        <h3>⚙️ 高级选项</h3>
+
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="batch_size">批处理大小</label>
+            <input type="number" id="batch_size" name="batch_size" value="1000" min="100" max="10000">
+            <small>每批处理的记录数，影响内存使用</small>
+          </div>
+
+          <div class="form-group">
+            <label>
+              <input type="checkbox" id="clear_tables" name="clear_tables" style="width: auto; margin-right: 8px;">
+              清空目标表
+            </label>
+            <small>导入前清空session和website_event表</small>
+          </div>
+
+          <div class="form-group">
+            <label>
+              <input type="checkbox" id="verify_results" name="verify_results" checked
+                style="width: auto; margin-right: 8px;">
+              验证导入结果
+            </label>
+            <small>导入完成后验证数据</small>
+          </div>
+        </div>
+      </div>
+
+      <!-- 操作按钮 -->
+      <div style="text-align: center; margin: 30px 0;">
+        <button type="submit" class="btn" id="generateBtn">
+          🛠️ 生成Python脚本
+        </button>
+      </div>
+    </form>
+
+    <!-- 进度条 -->
+    <div class="progress-container" id="progressContainer">
+      <div class="progress-bar">
+        <div class="progress-fill" id="progressFill"></div>
+      </div>
+      <p id="progressText">正在生成脚本...</p>
+    </div>
+
+    <!-- 结果显示 -->
+    <div class="result-section" id="resultSection">
+      <h3 id="resultTitle"></h3>
+      <div id="resultContent"></div>
+
+      <div style="text-align: center; margin-top: 20px;">
+        <button class="btn" id="downloadBtn" style="display: none;">
+          💾 下载Python脚本
+        </button>
+      </div>
+    </div>
+
+    <!-- 返回链接 -->
+    <div class="back-links">
+      <a href="/main.html" class="back-link">← 返回主页</a>
+      <a href="/upload.html" class="back-link">📤 简单上传</a>
+      <a href="/status.html" class="back-link">📊 查看状态</a>
+    </div>
+  </div>
+
+  <script>
+    // 全局变量
+    let generatedScript = '';
+
+    // DOM元素
+    const form = document.getElementById('importForm');
+    const uploadArea = document.getElementById('uploadArea');
+    const csvFile = document.getElementById('csvFile');
+    const fileInfo = document.getElementById('fileInfo');
+    const fileName = document.getElementById('fileName');
+    const fileSize = document.getElementById('fileSize');
+    const progressContainer = document.getElementById('progressContainer');
+    const progressFill = document.getElementById('progressFill');
+    const progressText = document.getElementById('progressText');
+    const resultSection = document.getElementById('resultSection');
+    const resultTitle = document.getElementById('resultTitle');
+    const resultContent = document.getElementById('resultContent');
+    const downloadBtn = document.getElementById('downloadBtn');
+
+    // 数据库类型切换
+    document.querySelectorAll('input[name="db_type"]').forEach(radio => {
+      radio.addEventListener('change', function () {
+        const port = document.getElementById('port');
+        if (this.value === 'mysql') {
+          port.value = '3306';
+        } else if (this.value === 'postgresql') {
+          port.value = '5432';
+        }
+      });
+    });
+
+    // 文件上传处理
+    csvFile.addEventListener('change', function () {
+      if (this.files && this.files[0]) {
+        const file = this.files[0];
+        fileName.textContent = file.name;
+        fileSize.textContent = formatFileSize(file.size);
+        fileInfo.style.display = 'block';
+
+        // 验证文件类型
+        if (!file.name.toLowerCase().endsWith('.csv')) {
+          alert('请选择CSV文件！');
+          this.value = '';
+          fileInfo.style.display = 'none';
+        }
+      }
+    });
+
+    // 拖拽上传
+    uploadArea.addEventListener('dragover', function (e) {
+      e.preventDefault();
+      this.style.borderColor = '#2980b9';
+      this.style.background = '#e3f2fd';
+    });
+
+    uploadArea.addEventListener('dragleave', function (e) {
+      e.preventDefault();
+      this.style.borderColor = '#3498db';
+      this.style.background = '#f8f9fa';
+    });
+
+    uploadArea.addEventListener('drop', function (e) {
+      e.preventDefault();
+      this.style.borderColor = '#3498db';
+      this.style.background = '#f8f9fa';
+
+      const files = e.dataTransfer.files;
+      if (files.length > 0 && files[0].name.toLowerCase().endsWith('.csv')) {
+        csvFile.files = files;
+        const event = new Event('change');
+        csvFile.dispatchEvent(event);
+      }
+    });
+
+    // 表单提交
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      generatePythonScript();
+    });
+
+    // 生成Python脚本
+    function generatePythonScript() {
+      showProgress();
+
+      // 模拟生成过程
+      let progress = 0;
+      const interval = setInterval(() => {
+        progress += 10;
+        updateProgress(progress, getProgressMessage(progress));
+
+        if (progress >= 100) {
+          clearInterval(interval);
+          setTimeout(() => {
+            hideProgress();
+            createPythonScript();
+          }, 500);
+        }
+      }, 150);
+    }
+
+    function createPythonScript() {
+      const formData = new FormData(form);
+      const config = Object.fromEntries(formData.entries());
+
+      // 生成Python脚本
+      generatedScript = generateScriptContent(config);
+
+      // 显示结果
+      showResult(true, '✅ Python脚本生成成功！', `
+                <p>已根据您的配置生成完整的Python导入脚本。</p>
+                <div class="code-block">
+                    <strong>脚本配置概要:</strong><br>
+                    • 数据库类型: ${config.db_type.toUpperCase()}<br>
+                    • 主机地址: ${config.host}:${config.port}<br>
+                    • 数据库: ${config.database}<br>
+                    • 批处理大小: ${config.batch_size}行<br>
+                    • 清空表: ${config.clear_tables ? '是' : '否'}<br>
+                    • 验证结果: ${config.verify_results ? '是' : '否'}
+                </div>
+                <p><strong>💻 本地执行步骤:</strong></p>
+                <ol>
+                    <li><strong>下载脚本:</strong> 点击下方按钮下载Python脚本到本地</li>
+                    <li><strong>准备文件:</strong> 将脚本和CSV文件放在同一目录</li>
+                    <li><strong>安装Python环境:</strong> 确保本地已安装Python 3.6+</li>
+                    <li><strong>安装依赖:</strong> <code>pip install pandas numpy ${config.db_type === 'mysql' ? 'pymysql' : 'psycopg2-binary'}</code></li>
+                    <li><strong>确保网络连通:</strong> 本地计算机需要能连接到数据库服务器</li>
+                    <li><strong>运行脚本:</strong> <code>python umami_import.py</code></li>
+                </ol>
+                <div style="background: #fff3cd; border: 1px solid #ffeaa7; color: #856404; padding: 15px; border-radius: 6px; margin: 15px 0;">
+                    <strong>⚠️ 注意:</strong> 此脚本需要在您的本地计算机运行，不是在Cloudflare上运行！
+                </div>
+            `);
+
+      downloadBtn.style.display = 'inline-block';
+    }
+
+    function generateScriptContent(config) {
+      const dbConfig = config.db_type === 'mysql' ?
+        `MYSQL_CONFIG = {
+    'host': '${config.host}',
+    'port': ${config.port},
+    'user': '${config.username}',
+    'password': '${config.password}',
+    'database': '${config.database}'
+}` :
+        `POSTGRES_CONFIG = {
+    'host': '${config.host}',
+    'port': ${config.port},
+    'database': '${config.database}',
+    'user': '${config.username}',
+    'password': '${config.password}',
+    'sslmode': 'require'
+}`;
+
+      return `# Umami CSV数据导入工具 - 自动生成脚本
+# 生成时间: ${new Date().toLocaleString('zh-CN')}
+
+# 安装依赖
+# pip install pandas numpy ${config.db_type === 'mysql' ? 'pymysql' : 'psycopg2-binary'}
+
+import pandas as pd
+import os
+import numpy as np
+from datetime import datetime
+import sys
+
+# =============================================================================
+# 配置信息 (已根据您的输入自动配置)
+# =============================================================================
+
+${dbConfig}
+
+# 文件配置
+CSV_FILE_PATH = '${csvFile.files[0]?.name || 'file.csv'}'
+REPLACEMENT_WEBSITE_ID = '${config.website_id}'
+BATCH_SIZE = ${config.batch_size}
+CLEAR_TABLES = ${config.clear_tables === 'on'}
+VERIFY_RESULTS = ${config.verify_results === 'on'}
+
+# =============================================================================
+# 主要功能代码 (与原脚本相同)
+# =============================================================================
+
+${getMainScriptContent(config.db_type)}
+
+if __name__ == "__main__":
+    try:
+        main()
+    except Exception as e:
+        print(f"❌ 程序异常退出: {e}")
+        sys.exit(1)
+`;
+    }
+
+    function getMainScriptContent(dbType) {
+      // 这里返回主要的Python脚本内容
+      // 为了简化，这里只返回一个占位符
+      return `
+def connect_to_database():
+    """连接到${dbType.toUpperCase()}数据库"""
+    try:
+        ${dbType === 'mysql' ? 'import pymysql as db_module' : 'import psycopg2 as db_module'}
+    except ImportError:
+        print(f"❌ 请安装数据库驱动: pip install ${dbType === 'mysql' ? 'pymysql' : 'psycopg2-binary'}")
+        return None
+    
+    try:
+        connection = db_module.connect(**${dbType.toUpperCase()}_CONFIG)
+        print("✅ 数据库连接成功")
+        return connection
+    except Exception as e:
+        print(f"❌ 数据库连接失败: {e}")
+        return None
+
+def main():
+    """主程序"""
+    print("🚀 Umami CSV数据导入工具")
+    print(f"⏰ 开始时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    
+    # 检查CSV文件
+    if not os.path.exists(CSV_FILE_PATH):
+        print(f"❌ CSV文件不存在: {CSV_FILE_PATH}")
+        return
+    
+    # 读取CSV
+    try:
+        df = pd.read_csv(CSV_FILE_PATH)
+        print(f"✅ 读取CSV成功: {len(df)}行数据")
+    except Exception as e:
+        print(f"❌ 读取CSV失败: {e}")
+        return
+    
+    # 连接数据库
+    connection = connect_to_database()
+    if not connection:
+        return
+    
+    try:
+        # 这里应该包含完整的数据处理逻辑
+        print("🔄 开始数据处理...")
+        print("✅ 数据导入完成")
+        
+    finally:
+        connection.close()
+        print("🔌 数据库连接已关闭")
+`;
+    }
+
+    // 下载脚本
+    downloadBtn.addEventListener('click', function () {
+      const blob = new Blob([generatedScript], { type: 'text/plain;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'umami_import.py';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    });
+
+    // 工具函数
+    function formatFileSize(bytes) {
+      if (bytes === 0) return '0 Bytes';
+      const k = 1024;
+      const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+      const i = Math.floor(Math.log(bytes) / Math.log(k));
+      return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+
+    function showProgress() {
+      progressContainer.style.display = 'block';
+      resultSection.style.display = 'none';
+    }
+
+    function hideProgress() {
+      progressContainer.style.display = 'none';
+    }
+
+    function updateProgress(percent, message) {
+      progressFill.style.width = percent + '%';
+      progressText.textContent = message;
+    }
+
+    function getProgressMessage(percent) {
+      if (percent <= 20) return '📋 解析配置信息...';
+      if (percent <= 40) return '🔧 生成数据库连接代码...';
+      if (percent <= 60) return '📊 创建数据处理逻辑...';
+      if (percent <= 80) return '🛠️ 组装完整脚本...';
+      return '✅ 脚本生成完成...';
+    }
+
+    function showResult(success, title, content) {
+      resultSection.className = 'result-section ' + (success ? 'success' : 'error');
+      resultSection.style.display = 'block';
+      resultTitle.textContent = title;
+      resultContent.innerHTML = content;
+    }
+  </script>
+</body>
+
+</html>

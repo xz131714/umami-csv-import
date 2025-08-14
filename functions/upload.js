@@ -2,7 +2,7 @@ export async function onRequest(context) {
   const request = context.request;
 
   if (request.method === 'GET') {
-      return new Response(`
+    return new Response(`
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -80,14 +80,14 @@ export async function onRequest(context) {
     </div>
 </body>
 </html>`, {
-        headers: {
-          'Content-Type': 'text/html; charset=utf-8',
-        },
-      });
-    }
+      headers: {
+        'Content-Type': 'text/html; charset=utf-8',
+      },
+    });
+  }
 
-    if (request.method === 'POST') {
-      return new Response(`
+  if (request.method === 'POST') {
+    return new Response(`
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -166,11 +166,11 @@ INSERT INTO umami.website_event (
     </div>
 </body>
 </html>`, {
-        headers: {
-          'Content-Type': 'text/html; charset=utf-8',
-        },
-      });
-    }
+      headers: {
+        'Content-Type': 'text/html; charset=utf-8',
+      },
+    });
+  }
 
-    return new Response('Method not allowed', { status: 405 });
+  return new Response('Method not allowed', { status: 405 });
 }
