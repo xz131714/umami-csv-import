@@ -81,8 +81,51 @@
 
     .radio-group {
       display: flex;
-      gap: 20px;
+      gap: 15px;
       margin-top: 8px;
+    }
+
+    .db-type-btn {
+      flex: 1;
+      padding: 12px 20px;
+      border: 2px solid #e9ecef;
+      border-radius: 8px;
+      background: white;
+      color: #6c757d;
+      font-size: 1rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-align: center;
+      position: relative;
+    }
+
+    .db-type-btn:hover {
+      border-color: #667eea;
+      color: #667eea;
+    }
+
+    .db-type-btn.active {
+      border-color: #667eea;
+      background: #667eea;
+      color: white;
+      box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+    }
+
+    .db-type-btn::before {
+      content: '';
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: transparent;
+      transition: background 0.3s ease;
+    }
+
+    .db-type-btn.active::before {
+      background: white;
     }
 
     .radio-option {
@@ -156,15 +199,16 @@
       <div class="form-group">
         <label>数据库类型</label>
         <div class="radio-group">
-          <div class="radio-option">
-            <input type="radio" id="mysql" name="db_type" value="mysql" checked>
-            <label for="mysql">MySQL</label>
-          </div>
-          <div class="radio-option">
-            <input type="radio" id="postgresql" name="db_type" value="postgresql">
-            <label for="postgresql">PostgreSQL</label>
-          </div>
+          <button type="button" class="db-type-btn active" data-type="mysql">
+            <strong>MySQL</strong><br>
+            <small>适用于大多数场景</small>
+          </button>
+          <button type="button" class="db-type-btn" data-type="postgresql">
+            <strong>PostgreSQL</strong><br>
+            <small>企业级解决方案</small>
+          </button>
         </div>
+        <input type="hidden" id="db_type" name="db_type" value="mysql">
       </div>
 
       <div class="form-row">
@@ -232,15 +276,24 @@
   <script>
     let generatedScript = '';
 
-    // 数据库类型切换
-    document.querySelectorAll('input[name="db_type"]').forEach(radio => {
-      radio.addEventListener('change', function () {
+    // 数据库类型按钮切换
+    document.querySelectorAll('.db-type-btn').forEach(btn => {
+      btn.addEventListener('click', function () {
+        // 移除所有active类
+        document.querySelectorAll('.db-type-btn').forEach(b => b.classList.remove('active'));
+        // 添加active类到当前按钮
+        this.classList.add('active');
+        
+        // 更新隐藏字段值
+        const dbType = this.dataset.type;
+        document.getElementById('db_type').value = dbType;
+        
+        // 更新端口提示
         const port = document.getElementById('port');
-        // 只在端口为空时自动填充
         if (!port.value) {
-          if (this.value === 'mysql') {
+          if (dbType === 'mysql') {
             port.placeholder = 'MySQL默认端口: 3306';
-          } else if (this.value === 'postgresql') {
+          } else if (dbType === 'postgresql') {
             port.placeholder = 'PostgreSQL默认端口: 5432';
           }
         }
