@@ -8,7 +8,7 @@
   <style>
     /* 导入Google Fonts获得更好的字体效果 */
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-    
+
     body {
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'PingFang SC', 'Microsoft YaHei', sans-serif;
       margin: 0;
@@ -408,55 +408,55 @@
     }
   </style>
 </head>
-      color: #721c24;
-    }
+color: #721c24;
+}
 
-    .code-block {
-      background: #2c3e50;
-      color: #ecf0f1;
-      padding: 20px;
-      border-radius: 6px;
-      font-family: 'Courier New', monospace;
-      overflow-x: auto;
-      margin: 15px 0;
-      font-size: 14px;
-    }
+.code-block {
+background: #2c3e50;
+color: #ecf0f1;
+padding: 20px;
+border-radius: 6px;
+font-family: 'Courier New', monospace;
+overflow-x: auto;
+margin: 15px 0;
+font-size: 14px;
+}
 
-    .back-links {
-      text-align: center;
-      margin-top: 40px;
-      padding-top: 20px;
-      border-top: 1px solid #ecf0f1;
-    }
+.back-links {
+text-align: center;
+margin-top: 40px;
+padding-top: 20px;
+border-top: 1px solid #ecf0f1;
+}
 
-    .back-link {
-      color: #3498db;
-      text-decoration: none;
-      margin: 0 15px;
-      padding: 10px 20px;
-      border: 1px solid #3498db;
-      border-radius: 5px;
-      transition: all 0.3s;
-    }
+.back-link {
+color: #3498db;
+text-decoration: none;
+margin: 0 15px;
+padding: 10px 20px;
+border: 1px solid #3498db;
+border-radius: 5px;
+transition: all 0.3s;
+}
 
-    .back-link:hover {
-      background: #3498db;
-      color: white;
-    }
+.back-link:hover {
+background: #3498db;
+color: white;
+}
 
-    .warning-box {
-      background: #fff3cd;
-      border: 1px solid #ffeaa7;
-      color: #856404;
-      padding: 15px;
-      border-radius: 6px;
-      margin: 20px 0;
-    }
+.warning-box {
+background: #fff3cd;
+border: 1px solid #ffeaa7;
+color: #856404;
+padding: 15px;
+border-radius: 6px;
+margin: 20px 0;
+}
 
-    .warning-box strong {
-      color: #d35400;
-    }
-  </style>
+.warning-box strong {
+color: #d35400;
+}
+</style>
 </head>
 
 <body>
@@ -533,22 +533,37 @@
         </div>
       </div>
 
-      <!-- 文件上传 -->
+      <!-- CSV文件配置 -->
       <div class="form-section">
-        <h3>📁 CSV文件</h3>
+        <h3>📁 CSV文件设置</h3>
 
-        <div class="upload-area" id="uploadArea">
-          <input type="file" id="csvFile" name="csvFile" accept=".csv" required>
-          <div>
-            <h4>📤 选择CSV文件</h4>
-            <p>点击或拖拽CSV文件到此区域</p>
-            <p><small>支持UTF-8和GBK编码</small></p>
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="csv_filename">CSV文件名</label>
+            <input type="text" id="csv_filename" name="csv_filename" placeholder="data.csv" value="file.csv" required>
+            <small>本地CSV文件的文件名（需与Python脚本在同一目录）</small>
+          </div>
+
+          <div class="form-group">
+            <label for="csv_encoding">文件编码</label>
+            <select id="csv_encoding" name="csv_encoding">
+              <option value="utf-8">UTF-8</option>
+              <option value="gbk">GBK</option>
+              <option value="auto">自动检测</option>
+            </select>
+            <small>CSV文件的字符编码格式</small>
           </div>
         </div>
 
-        <div id="fileInfo" style="margin-top: 15px; display: none;">
-          <strong>已选择文件:</strong> <span id="fileName"></span>
-          <br><small>文件大小: <span id="fileSize"></span></small>
+        <div
+          style="background: #e6fffa; border: 2px solid #38b2ac; border-radius: 12px; padding: 20px; margin-top: 20px;">
+          <h4 style="margin: 0 0 10px 0; color: #234e52;">💡 使用说明</h4>
+          <ul style="margin: 0; color: #2d3748; line-height: 1.6;">
+            <li>请确保CSV文件与生成的Python脚本在同一目录下</li>
+            <li>文件名区分大小写，请准确输入</li>
+            <li>支持相对路径，如：<code>data/import.csv</code></li>
+            <li>建议使用UTF-8编码以避免中文乱码问题</li>
+          </ul>
         </div>
       </div>
 
@@ -630,11 +645,6 @@
 
     // DOM元素
     const form = document.getElementById('importForm');
-    const uploadArea = document.getElementById('uploadArea');
-    const csvFile = document.getElementById('csvFile');
-    const fileInfo = document.getElementById('fileInfo');
-    const fileName = document.getElementById('fileName');
-    const fileSize = document.getElementById('fileSize');
     const progressContainer = document.getElementById('progressContainer');
     const progressFill = document.getElementById('progressFill');
     const progressText = document.getElementById('progressText');
@@ -653,49 +663,6 @@
           port.value = '5432';
         }
       });
-    });
-
-    // 文件上传处理
-    csvFile.addEventListener('change', function () {
-      if (this.files && this.files[0]) {
-        const file = this.files[0];
-        fileName.textContent = file.name;
-        fileSize.textContent = formatFileSize(file.size);
-        fileInfo.style.display = 'block';
-
-        // 验证文件类型
-        if (!file.name.toLowerCase().endsWith('.csv')) {
-          alert('请选择CSV文件！');
-          this.value = '';
-          fileInfo.style.display = 'none';
-        }
-      }
-    });
-
-    // 拖拽上传
-    uploadArea.addEventListener('dragover', function (e) {
-      e.preventDefault();
-      this.style.borderColor = '#2980b9';
-      this.style.background = '#e3f2fd';
-    });
-
-    uploadArea.addEventListener('dragleave', function (e) {
-      e.preventDefault();
-      this.style.borderColor = '#3498db';
-      this.style.background = '#f8f9fa';
-    });
-
-    uploadArea.addEventListener('drop', function (e) {
-      e.preventDefault();
-      this.style.borderColor = '#3498db';
-      this.style.background = '#f8f9fa';
-
-      const files = e.dataTransfer.files;
-      if (files.length > 0 && files[0].name.toLowerCase().endsWith('.csv')) {
-        csvFile.files = files;
-        const event = new Event('change');
-        csvFile.dispatchEvent(event);
-      }
     });
 
     // 表单提交
@@ -739,6 +706,8 @@
                     • 数据库类型: ${config.db_type.toUpperCase()}<br>
                     • 主机地址: ${config.host}:${config.port}<br>
                     • 数据库: ${config.database}<br>
+                    • CSV文件: ${config.csv_filename}<br>
+                    • 文件编码: ${config.csv_encoding.toUpperCase()}<br>
                     • 批处理大小: ${config.batch_size}行<br>
                     • 清空表: ${config.clear_tables ? '是' : '否'}<br>
                     • 验证结果: ${config.verify_results ? '是' : '否'}
@@ -797,7 +766,8 @@ import sys
 ${dbConfig}
 
 # 文件配置
-CSV_FILE_PATH = '${csvFile.files[0]?.name || 'file.csv'}'
+CSV_FILE_PATH = '${config.csv_filename}'
+CSV_ENCODING = '${config.csv_encoding}'
 REPLACEMENT_WEBSITE_ID = '${config.website_id}'
 BATCH_SIZE = ${config.batch_size}
 CLEAR_TABLES = ${config.clear_tables === 'on'}
@@ -842,18 +812,34 @@ def main():
     """主程序"""
     print("🚀 Umami CSV数据导入工具")
     print(f"⏰ 开始时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    print(f"📁 目标文件: {CSV_FILE_PATH}")
+    print(f"🔤 文件编码: {CSV_ENCODING}")
     
     # 检查CSV文件
     if not os.path.exists(CSV_FILE_PATH):
         print(f"❌ CSV文件不存在: {CSV_FILE_PATH}")
+        print("💡 请确保CSV文件与此脚本在同一目录下")
         return
     
     # 读取CSV
     try:
-        df = pd.read_csv(CSV_FILE_PATH)
-        print(f"✅ 读取CSV成功: {len(df)}行数据")
+        if CSV_ENCODING == 'auto':
+            # 自动检测编码
+            try:
+                df = pd.read_csv(CSV_FILE_PATH, encoding='utf-8')
+                print("✅ 使用UTF-8编码读取成功")
+            except UnicodeDecodeError:
+                df = pd.read_csv(CSV_FILE_PATH, encoding='gbk')
+                print("✅ 使用GBK编码读取成功")
+        else:
+            df = pd.read_csv(CSV_FILE_PATH, encoding=CSV_ENCODING)
+            print(f"✅ 使用{CSV_ENCODING.upper()}编码读取成功")
+        
+        print(f"📊 数据行数: {len(df)}行")
+        print(f"📋 数据列数: {len(df.columns)}列")
     except Exception as e:
         print(f"❌ 读取CSV失败: {e}")
+        print("💡 请检查文件路径和编码设置")
         return
     
     # 连接数据库
