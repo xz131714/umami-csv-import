@@ -1,95 +1,104 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Umami CSV导入工具</title>
-    <style>
-        body { 
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
-            margin: 0; 
-            padding: 20px; 
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .container { 
-            background: white; 
-            border-radius: 15px; 
-            padding: 40px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
-            text-align: center;
-            max-width: 600px;
-        }
-        .header h1 { 
-            color: #2c3e50; 
-            margin: 0;
-            font-size: 2.5em;
-            font-weight: 700;
-        }
-        .nav-links {
-            display: flex;
-            justify-content: center;
-            gap: 20px;
-            margin-top: 30px;
-            flex-wrap: wrap;
-        }
-        .nav-link {
-            background: linear-gradient(45deg, #3498db, #2980b9);
-            color: white;
-            padding: 15px 30px;
-            text-decoration: none;
-            border-radius: 8px;
-            font-weight: 600;
-            transition: all 0.3s ease;
-            display: inline-block;
-        }
-        .nav-link:hover {
-            background: linear-gradient(45deg, #2980b9, #1c6ea4);
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(52, 152, 219, 0.4);
-        }
-        .platform-info {
-            margin: 20px 0;
-            padding: 15px;
-            background: #f8f9fa;
-            border-radius: 8px;
-            color: #666;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Umami CSV导入工具</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .container {
+      background: white;
+      border-radius: 15px;
+      padding: 40px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+      text-align: center;
+      max-width: 600px;
+    }
+
+    .header h1 {
+      color: #2c3e50;
+      margin: 0;
+      font-size: 2.5em;
+      font-weight: 700;
+    }
+
+    .nav-links {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      margin-top: 30px;
+      flex-wrap: wrap;
+    }
+
+    .nav-link {
+      background: linear-gradient(45deg, #3498db, #2980b9);
+      color: white;
+      padding: 15px 30px;
+      text-decoration: none;
+      border-radius: 8px;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      display: inline-block;
+    }
+
+    .nav-link:hover {
+      background: linear-gradient(45deg, #2980b9, #1c6ea4);
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(52, 152, 219, 0.4);
+    }
+
+    .platform-info {
+      margin: 20px 0;
+      padding: 15px;
+      background: #f8f9fa;
+      border-radius: 8px;
+      color: #666;
+    }
+  </style>
 </head>
+
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>🍜 Umami CSV导入工具</h1>
-            <p>轻松将CSV数据导入到Umami分析平台</p>
-        </div>
-        
-        <div class="platform-info">
-            <p id="platform-info">⚡ Cloudflare Pages 部署</p>
-        </div>
-        
-        <div class="nav-links">
-            <a href="/functions/" class="nav-link">🏠 主页</a>
-            <a href="/functions/upload" class="nav-link">📤 上传文件</a>
-            <a href="/functions/status" class="nav-link">📊 查看状态</a>
-        </div>
-        
-        <div style="margin-top: 30px; color: #666;">
-            <p><strong>功能介绍：</strong></p>
-            <p>• 📊 解析CSV文件并生成Umami兼容的SQL</p>
-            <p>• 🔄 支持多种编码格式和数据类型</p>
-            <p>• ⚡ 基于Cloudflare Pages边缘计算</p>
-        </div>
+  <div class="container">
+    <div class="header">
+      <h1>🍜 Umami CSV导入工具</h1>
+      <p>轻松将CSV数据导入到Umami分析平台</p>
     </div>
 
-    <script>
-        // 简单的页面初始化
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('Umami CSV导入工具已加载 - Cloudflare Pages版本');
-        });
-    </script>
+    <div class="platform-info">
+      <p id="platform-info">⚡ Cloudflare Pages 部署</p>
+    </div>
+
+    <div class="nav-links">
+      <a href="/functions/" class="nav-link">🏠 主页</a>
+      <a href="/functions/upload" class="nav-link">📤 上传文件</a>
+      <a href="/functions/status" class="nav-link">📊 查看状态</a>
+    </div>
+
+    <div style="margin-top: 30px; color: #666;">
+      <p><strong>功能介绍：</strong></p>
+      <p>• 📊 解析CSV文件并生成Umami兼容的SQL</p>
+      <p>• 🔄 支持多种编码格式和数据类型</p>
+      <p>• ⚡ 基于Cloudflare Pages边缘计算</p>
+    </div>
+  </div>
+
+  <script>
+    // 简单的页面初始化
+    document.addEventListener('DOMContentLoaded', function () {
+      console.log('Umami CSV导入工具已加载 - Cloudflare Pages版本');
+    });
+  </script>
 </body>
+
 </html>

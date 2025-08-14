@@ -1,6 +1,7 @@
-def on_request(context):
-    """Cloudflare Pages状态页面"""
-    html = """<!DOCTYPE html>
+export default {
+  async fetch(request, env, ctx) {
+    return new Response(`
+<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
@@ -58,14 +59,14 @@ def on_request(context):
             <p><strong>状态:</strong> 正常运行</p>
             <p><strong>响应时间:</strong> < 100ms</p>
             <p><strong>CDN:</strong> 全球边缘网络</p>
-            <p><strong>URL:</strong> <a href="#">https://your-project.pages.dev</a></p>
+            <p><strong>URL:</strong> <a href="#">${request.url}</a></p>
         </div>
         
         <div class="platform-info">
             <div class="status-card">
                 <h4>💾 技术栈</h4>
                 <ul>
-                    <li>Python 3.9+ Functions</li>
+                    <li>JavaScript Functions</li>
                     <li>Cloudflare Workers</li>
                     <li>边缘计算</li>
                     <li>全球CDN加速</li>
@@ -94,5 +95,10 @@ def on_request(context):
         <a href="/functions/" class="back-link">← 返回首页</a>
     </div>
 </body>
-</html>"""
-    return html
+</html>`, {
+      headers: {
+        'Content-Type': 'text/html; charset=utf-8',
+      },
+    });
+  },
+};

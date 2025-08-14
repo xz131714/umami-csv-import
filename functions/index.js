@@ -1,8 +1,7 @@
-def on_request(context):
-    """Cloudflare Pages主页函数"""
-    
-    # 返回Response对象
-    html = """<!DOCTYPE html>
+export default {
+  async fetch(request, env, ctx) {
+    return new Response(`
+<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
@@ -156,7 +155,10 @@ def on_request(context):
         </div>
     </div>
 </body>
-</html>"""
-    
-    # 设置正确的响应头
-    return html
+</html>`, {
+      headers: {
+        'Content-Type': 'text/html; charset=utf-8',
+      },
+    });
+  },
+};
