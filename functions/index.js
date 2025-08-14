@@ -1,6 +1,5 @@
-export default {
-  async fetch(request, env, ctx) {
-    return new Response(`
+export async function onRequest(context) {
+  return new Response(`
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -160,5 +159,4 @@ export default {
         'Content-Type': 'text/html; charset=utf-8',
       },
     });
-  },
-};
+}

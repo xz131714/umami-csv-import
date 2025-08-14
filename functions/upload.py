@@ -1,9 +1,12 @@
-export async function onRequest(context) {
-  const request = context.request;
-
-  if (request.method === 'GET') {
-      return new Response(`
-<!DOCTYPE html>
+def on_request(context):
+    """Cloudflare Pages上传功能"""
+    
+    # 获取请求对象
+    request = context.request
+    
+    if request.method == "GET":
+        # 显示上传表单
+        html = """<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
@@ -79,16 +82,12 @@ export async function onRequest(context) {
         <a href="/functions/" class="back-link">← 返回首页</a>
     </div>
 </body>
-</html>`, {
-        headers: {
-          'Content-Type': 'text/html; charset=utf-8',
-        },
-      });
-    }
-
-    if (request.method === 'POST') {
-      return new Response(`
-<!DOCTYPE html>
+</html>"""
+        return html
+    
+    elif request.method == "POST":
+        # 处理文件上传
+        html = """<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
@@ -165,12 +164,5 @@ INSERT INTO umami.website_event (
         <a href="/functions/" class="back-link">← 返回首页</a>
     </div>
 </body>
-</html>`, {
-        headers: {
-          'Content-Type': 'text/html; charset=utf-8',
-        },
-      });
-    }
-
-    return new Response('Method not allowed', { status: 405 });
-}
+</html>"""
+        return html
