@@ -211,6 +211,13 @@
         </div>
       </div>
 
+      <div class="form-group">
+        <label for="website_id">目标Website ID</label>
+        <input type="text" id="website_id" name="website_id" placeholder="01923022-a812-4369-b896-862fa37d32b1"
+          value="01923022-a812-4369-b896-862fa37d32b1">
+        <small style="color: #666; font-size: 0.9rem;">所有导入的数据将替换为此Website ID</small>
+      </div>
+
       <div style="text-align: center; margin-top: 40px;">
         <button type="submit" class="btn">生成Python脚本</button>
       </div>
@@ -267,97 +274,417 @@
     });
 
     function generateScript(config) {
-      return `# Umami CSV数据导入工具
-# 生成时间: ${new Date().toLocaleString('zh-CN')}
-
+      return `# 安装依赖
+# pip install pandas numpy pymysql psycopg2-binary
 import pandas as pd
 import os
+import numpy as np
 from datetime import datetime
+import sys
 
-# 配置信息
-DB_TYPE = '${config.db_type}'
-HOST = '${config.host}'
-PORT = ${config.port}
-USERNAME = '${config.username}'
-PASSWORD = '${config.password}'
-DATABASE = '${config.database}'
-CSV_FILE = '${config.csv_filename}'
-CSV_ENCODING = '${config.csv_encoding}'
+# =============================================================================
+# 配置信息 - 请根据您的实际情况修改
+# =============================================================================
 
-def connect_database():
-    """连接数据库"""
+# MySQL配置
+MYSQL_CONFIG = {
+    'host': '${config.host}',
+    'port': ${config.port},
+    'user': '${config.username}',
+    'password': '${config.password}',
+    'database': '${config.database}'
+}
+
+# PostgreSQL配置
+POSTGRES_CONFIG = {
+    'host': '${config.host}',
+    'port': ${config.port},
+    'database': '${config.database}',
+    'user': '${config.username}',
+    'password': '${config.password}',
+    'sslmode': 'require'
+}
+
+# 文件配置
+CSV_FILE_PATH = '${config.csv_filename}'  # CSV文件路径
+REPLACEMENT_WEBSITE_ID = '${config.website_id || '01923022-a812-4369-b896-862fa37d32b1'}'  # 目标website_id
+
+# =============================================================================
+# 数据库连接函数
+# =============================================================================
+
+def connect_to_mysql():
+    """连接到MySQL数据库"""
     try:
-        if DB_TYPE == 'mysql':
-            import pymysql
-            conn = pymysql.connect(
-                host=HOST,
-                port=PORT,
-                user=USERNAME,
-                password=PASSWORD,
-                database=DATABASE
-            )
-        else:
-            import psycopg2
-            conn = psycopg2.connect(
-                host=HOST,
-                port=PORT,
-                user=USERNAME,
-                password=PASSWORD,
-                database=DATABASE
-            )
-        print("✅ 数据库连接成功")
-        return conn
-    except Exception as e:
-        print(f"❌ 数据库连接失败: {e}")
-        return None
-
-def load_csv():
-    """加载CSV文件"""
-    if not os.path.exists(CSV_FILE):
-        print(f"❌ 文件不存在: {CSV_FILE}")
+        import pymysql
+    except ImportError:
+        print("❌ pymysql模块未安装，请运行: pip install pymysql")
         return None
     
     try:
-        if CSV_ENCODING == 'auto':
-            try:
-                df = pd.read_csv(CSV_FILE, encoding='utf-8')
-                print("✅ 使用UTF-8编码读取成功")
-            except:
-                df = pd.read_csv(CSV_FILE, encoding='gbk')
-                print("✅ 使用GBK编码读取成功")
-        else:
-            df = pd.read_csv(CSV_FILE, encoding=CSV_ENCODING)
-            print(f"✅ 使用{CSV_ENCODING}编码读取成功")
+        connection = pymysql.connect(**MYSQL_CONFIG)
+        print("✅ 成功连接到MySQL数据库")
         
-        print(f"📊 数据行数: {len(df)}")
-        return df
+        # 测试连接并显示信息
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT VERSION(), DATABASE(), USER()")
+            version, database, user = cursor.fetchone()
+            print(f"📊 数据库版本: {version}")
+            print(f"📋 当前数据库: {database}")
+            print(f"👤 当前用户: {user}")
+        
+        return connection
     except Exception as e:
-        print(f"❌ 读取CSV失败: {e}")
+        print(f"❌ 连接MySQL数据库失败: {e}")
         return None
+
+def connect_to_postgres():
+    """连接到PostgreSQL数据库"""
+    try:
+        import psycopg2
+    except ImportError:
+        print("❌ psycopg2模块未安装，请运行: pip install psycopg2-binary")
+        return None
+    
+    try:
+        connection = psycopg2.connect(**POSTGRES_CONFIG)
+        print("✅ 成功连接到PostgreSQL数据库")
+        
+        # 测试连接并显示信息
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT version(), current_database(), current_user")
+            version, database, user = cursor.fetchone()
+            print(f"📊 数据库版本: {version[:50]}...")
+            print(f"📋 当前数据库: {database}")
+            print(f"👤 当前用户: {user}")
+        
+        return connection
+    except Exception as e:
+        print(f"❌ 连接PostgreSQL数据库失败: {e}")
+        return None
+
+def select_database_type():
+    """让用户选择数据库类型"""
+    print("\\n" + "="*50)
+    print("🔗 请选择要使用的数据库类型:")
+    print("1. MySQL")
+    print("2. PostgreSQL")
+    print("="*50)
+    
+    while True:
+        choice = input("请输入选择 (1 或 2): ").strip()
+        
+        if choice == '1':
+            print("🔹 已选择: MySQL")
+            return 'mysql'
+        elif choice == '2':
+            print("🔹 已选择: PostgreSQL")
+            return 'postgres'
+        else:
+            print("❌ 无效选择，请输入 1 或 2")
+
+def connect_to_database(db_type):
+    """根据数据库类型连接到相应数据库"""
+    print(f"\\n🔌 正在连接到 {db_type.upper()} 数据库...")
+    
+    if db_type == 'mysql':
+        return connect_to_mysql()
+    elif db_type == 'postgres':
+        return connect_to_postgres()
+    else:
+        print(f"❌ 不支持的数据库类型: {db_type}")
+        return None
+
+# =============================================================================
+# 数据处理函数
+# =============================================================================
+
+def clean_dataframe_for_db(df):
+    """清理DataFrame数据，确保数据库兼容性"""
+    print(f"🧹 开始清洗数据，原始行数: {len(df)}")
+    
+    # 创建副本
+    cleaned_df = df.copy()
+    
+    # 处理特殊值
+    cleaned_df = cleaned_df.replace([np.nan, np.inf, -np.inf], None)
+    
+    # 简单统计
+    null_count = cleaned_df.isnull().sum().sum()
+    
+    print(f"✅ 数据清洗完成:")
+    print(f"   - 数据形状: {cleaned_df.shape}")
+    print(f"   - 空值数量: {null_count}")
+    
+    return cleaned_df
+
+def get_table_columns(connection, table_name, db_type):
+    """获取数据库表的列名"""
+    with connection.cursor() as cursor:
+        if db_type == 'mysql':
+            cursor.execute(f"DESCRIBE \`{table_name}\`")
+            columns = [column[0] for column in cursor.fetchall()]
+        else:  # postgres
+            cursor.execute(f"""
+                SELECT column_name 
+                FROM information_schema.columns 
+                WHERE table_name='{table_name}' 
+                ORDER BY ordinal_position
+            """)
+            columns = [column[0] for column in cursor.fetchall()]
+    return columns
+
+def truncate_tables(connection, db_type):
+    """清空目标表"""
+    print("🗑️ 正在清空目标表...")
+    target_tables = ['session', 'website_event']
+    
+    with connection.cursor() as cursor:
+        try:
+            for table in target_tables:
+                if db_type == 'mysql':
+                    cursor.execute(f"TRUNCATE TABLE \`{table}\`")
+                else:  # postgres
+                    cursor.execute(f'TRUNCATE TABLE "{table}" RESTART IDENTITY CASCADE')
+                print(f"   ✅ 已清空表: {table}")
+            
+            connection.commit()
+            print("✅ 所有表清空完成")
+            
+        except Exception as e:
+            print(f"❌ 清空表时出错: {e}")
+            connection.rollback()
+
+def insert_data_batch(connection, table_name, df, db_type, batch_size=1000):
+    """批量插入数据，支持MySQL和PostgreSQL"""
+    if df.empty:
+        print(f"⚠️ 表{table_name}没有数据需要插入")
+        return
+    
+    print(f"📥 开始插入表 {table_name}，数据行数: {len(df)}")
+    
+    # 构建SQL语句
+    columns = list(df.columns)
+    
+    if db_type == 'mysql':
+        # MySQL语法
+        column_names = ', '.join([f"\`{col}\`" for col in columns])
+        placeholders = ', '.join(['%s'] * len(columns))
+        sql = f"INSERT IGNORE INTO \`{table_name}\` ({column_names}) VALUES ({placeholders})"
+    else:  # postgres
+        # PostgreSQL语法
+        column_names = ', '.join([f'"{col}"' for col in columns])
+        placeholders = ', '.join(['%s'] * len(columns))
+        sql = f'INSERT INTO "{table_name}" ({column_names}) VALUES ({placeholders}) ON CONFLICT DO NOTHING'
+    
+    # 转换数据
+    data_tuples = []
+    for _, row in df.iterrows():
+        tuple_row = tuple(None if pd.isna(val) else val for val in row.values)
+        data_tuples.append(tuple_row)
+    
+    # 分批插入
+    inserted_count = 0
+    total_processed = 0
+    
+    with connection.cursor() as cursor:
+        try:
+            for i in range(0, len(data_tuples), batch_size):
+                batch = data_tuples[i:i + batch_size]
+                
+                # 获取插入前的行数
+                if db_type == 'mysql':
+                    cursor.execute(f"SELECT COUNT(*) FROM \`{table_name}\`")
+                else:
+                    cursor.execute(f'SELECT COUNT(*) FROM "{table_name}"')
+                count_before = cursor.fetchone()[0]
+                
+                # 执行批量插入
+                cursor.executemany(sql, batch)
+                connection.commit()
+                
+                # 获取插入后的行数
+                if db_type == 'mysql':
+                    cursor.execute(f"SELECT COUNT(*) FROM \`{table_name}\`")
+                else:
+                    cursor.execute(f'SELECT COUNT(*) FROM "{table_name}"')
+                count_after = cursor.fetchone()[0]
+                
+                # 统计结果
+                batch_inserted = count_after - count_before
+                batch_skipped = len(batch) - batch_inserted
+                
+                inserted_count += batch_inserted
+                total_processed += len(batch)
+                
+                print(f"   批次{i//batch_size + 1}: 处理{len(batch)}行，插入{batch_inserted}行，跳过{batch_skipped}行")
+        
+        except Exception as e:
+            print(f"❌ 插入数据到表{table_name}时出错: {e}")
+            connection.rollback()
+            return
+    
+    skipped_count = total_processed - inserted_count
+    print(f"✅ 表{table_name}插入完成: 总共处理{total_processed}行，插入{inserted_count}行，跳过{skipped_count}行重复数据")
+    if total_processed > 0:
+        print(f"📈 去重率: {skipped_count/total_processed*100:.1f}%")
+
+def process_table(connection, csv_df, table_name, db_type):
+    """处理单个表的数据导入"""
+    print(f"\\n🔄 处理表: {table_name}")
+    
+    # 获取数据库表结构
+    table_columns = get_table_columns(connection, table_name, db_type)
+    print(f"📋 数据库表 {table_name} 包含 {len(table_columns)} 个字段")
+    
+    # 匹配CSV和数据库共有字段
+    common_columns = [col for col in table_columns if col in csv_df.columns]
+    
+    if not common_columns:
+        print(f"⚠️ 表{table_name}没有与CSV文件匹配的列")
+        return
+    
+    print(f"🎯 匹配到 {len(common_columns)} 个共同字段: {common_columns[:5]}{'...' if len(common_columns) > 5 else ''}")
+    
+    # 创建子数据集
+    sub_df = csv_df[common_columns].copy()
+    
+    # 替换website_id
+    if 'website_id' in sub_df.columns:
+        sub_df['website_id'] = REPLACEMENT_WEBSITE_ID
+        print(f"🔄 已替换website_id为: {REPLACEMENT_WEBSITE_ID[:8]}...")
+    
+    # 清洗并插入数据
+    cleaned_df = clean_dataframe_for_db(sub_df)
+    insert_data_batch(connection, table_name, cleaned_df, db_type)
+
+# =============================================================================
+# 主程序
+# =============================================================================
 
 def main():
-    """主程序"""
-    print("🚀 Umami CSV数据导入工具")
-    print(f"⏰ 开始时间: {datetime.now()}")
+    """主程序入口"""
+    print("🚀 Umami CSV数据通用导入工具")
+    print(f"⏰ 开始时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    print("=" * 60)
     
-    # 加载数据
-    df = load_csv()
-    if df is None:
+    # 检查CSV文件
+    if not os.path.exists(CSV_FILE_PATH):
+        print(f"❌ CSV文件不存在: {CSV_FILE_PATH}")
         return
+    
+    # 读取CSV文件
+    try:
+        print(f"📖 正在读取CSV文件: {CSV_FILE_PATH}")
+        ${config.csv_encoding === 'auto' ?
+          `# 自动检测编码
+        try:
+            df = pd.read_csv(CSV_FILE_PATH, encoding='utf-8')
+            print("✅ 使用UTF-8编码读取成功")
+        except UnicodeDecodeError:
+            df = pd.read_csv(CSV_FILE_PATH, encoding='gbk')
+            print("✅ 使用GBK编码读取成功")` :
+          `df = pd.read_csv(CSV_FILE_PATH, encoding='${config.csv_encoding}')
+        print("✅ 使用${config.csv_encoding.toUpperCase()}编码读取成功")`
+        }
+        print(f"✅ CSV文件读取成功，共{len(df)}行数据，{len(df.columns)}个字段")
+        print(f"📊 字段列表: {list(df.columns)[:8]}{'...' if len(df.columns) > 8 else ''}")
+    except Exception as e:
+        print(f"❌ 读取CSV文件失败: {e}")
+        return
+    
+    # 选择数据库类型
+    db_type = select_database_type()
     
     # 连接数据库
-    conn = connect_database()
-    if conn is None:
+    connection = connect_to_database(db_type)
+    if not connection:
         return
     
-    print("🔄 开始数据处理...")
-    # 这里添加具体的数据处理逻辑
-    print("✅ 处理完成")
+    try:
+        # 检查目标表是否存在
+        print(f"\\n🔍 检查目标表:")
+        target_tables = ['session', 'website_event']
+        
+        for table in target_tables:
+            try:
+                table_columns = get_table_columns(connection, table, db_type)
+                print(f"   ✅ 表 {table}: {len(table_columns)} 个字段")
+            except Exception as e:
+                print(f"   ❌ 表 {table}: 不存在或无权限")
+        
+        # 询问是否清空表
+        clear_choice = input(f"\\n🗑️ 是否清空目标表? (y/N): ").strip().lower()
+        if clear_choice in ['y', 'yes']:
+            truncate_tables(connection, db_type)
+        
+        # 处理目标表
+        for table in target_tables:
+            try:
+                process_table(connection, df, table, db_type)
+            except Exception as e:
+                print(f"❌ 处理表{table}时出错: {e}")
+                continue
+        
+        print("\\n" + "=" * 60)
+        print(f"🎉 数据导入完成！")
+        print(f"⏰ 结束时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+        
+        # 验证导入结果
+        verify_results = input(f"\\n🔍 是否验证导入结果? (Y/n): ").strip().lower()
+        if verify_results not in ['n', 'no']:
+            verify_import_results(connection, db_type)
+        
+    except KeyboardInterrupt:
+        print(f"\\n⚠️ 用户中断操作")
+    except Exception as e:
+        print(f"❌ 程序执行出错: {e}")
+    finally:
+        connection.close()
+        print("🔌 数据库连接已关闭")
+
+def verify_import_results(connection, db_type):
+    """验证数据导入结果"""
+    print("\\n🔍 验证数据导入结果")
+    print("=" * 40)
     
-    conn.close()
+    try:
+        with connection.cursor() as cursor:
+            # 查询各表的数据量
+            tables = ['session', 'website_event']
+            
+            for table in tables:
+                if db_type == 'mysql':
+                    cursor.execute(f"SELECT COUNT(*) FROM \`{table}\`")
+                else:
+                    cursor.execute(f'SELECT COUNT(*) FROM "{table}"')
+                
+                count = cursor.fetchone()[0]
+                print(f"📊 表 {table}: {count} 条记录")
+            
+            # 统计website_id
+            if db_type == 'mysql':
+                cursor.execute("SELECT website_id, COUNT(*) FROM \`session\` GROUP BY website_id")
+            else:
+                cursor.execute('SELECT website_id, COUNT(*) FROM "session" GROUP BY website_id')
+            
+            website_stats = cursor.fetchall()
+            if website_stats:
+                print("\\n🎯 Website ID 统计:")
+                for website_id, count in website_stats:
+                    print(f"   {website_id}: {count} 个会话")
+    
+    except Exception as e:
+        print(f"❌ 验证过程出错: {e}")
+    
+    print("\\n✅ 验证完成")
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except Exception as e:
+        print(f"❌ 程序异常退出: {e}")
+        sys.exit(1)
 `;
     }
   </script>
