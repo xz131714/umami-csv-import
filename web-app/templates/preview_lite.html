@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>数据预览和SQL生成 - Umami 导入工具</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+  <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+</head>
+
+<body>
+  <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <div class="container">
+      <a class="navbar-brand" href="{{ url_for('index') }}">
+        <i class="fas fa-database me-2"></i>Umami 数据导入工具 (轻量版)
+      </a>
+      <div class="navbar-nav">
+        <a class="nav-link" href="{{ url_for('index') }}">
+          <i class="fas fa-home me-1"></i>首页
+        </a>
+        <a class="nav-link" href="{{ url_for('upload_file') }}">
+          <i class="fas fa-upload me-1"></i>上传文件
+        </a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container mt-4">
+    <div class="alert alert-info">
+      <i class="fas fa-info-circle me-2"></i>
+      <strong>轻量版说明：</strong>此版本将生成SQL语句供您手动执行，不直接连接数据库。
+    </div>
+
+    <div class="row">
+      <!-- 左侧：数据预览 -->
+      <div class="col-lg-6 mb-4">
+        <div class="card shadow">
+          <div class="card-header bg-info text-white">
+            <h5 class="mb-0">
+              <i class="fas fa-eye me-2"></i>数据预览
+            </h5>
+          </div>
+          <div class="card-body">
+            <div class="mb-3">
+              <strong>文件名：</strong>{{ file_info.filename }}<br>
+              <strong>字段数量：</strong>{{ file_info.columns|length }}<br>
+              <strong>上传时间：</strong>{{ file_info.upload_time }}
+            </div>
+
+            <h6>字段列表：</h6>
+            <div class="mb-3">
+              {% for column in file_info.columns %}
+              <span class="badge bg-secondary me-1 mb-1">{{ column }}</span>
+              {% endfor %}
+            </div>
+
+            <h6>样本数据：</h6>
+            <div class="table-responsive">
+              <table class="table table-sm table-bordered">
+                <thead class="table-light">
+                  <tr>
+                    {% for column in file_info.columns[:5] %}
+                    <th>{{ column }}</th>
+                    {% endfor %}
+                    {% if file_info.columns|length > 5 %}
+                    <th>...</th>
+                    {% endif %}
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for row in file_info.sample_data %}
+                  <tr>
+                    {% for column in file_info.columns[:5] %}
+                    <td title="{{ row[column] }}">
+                      {{ (row[column]|string)[:20] }}{% if (row[column]|string)|length > 20 %}...{% endif %}
+                    </td>
+                    {% endfor %}
+                    {% if file_info.columns|length > 5 %}
+                    <td>...</td>
+                    {% endif %}
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 右侧：SQL生成配置 -->
+      <div class="col-lg-6 mb-4">
+        <div class="card shadow">
+          <div class="card-header bg-warning text-dark">
+            <h5 class="mb-0">
+              <i class="fas fa-code me-2"></i>SQL生成配置
+            </h5>
+          </div>
+          <div class="card-body">
+            <form id="sqlForm">
+              <!-- 数据库类型选择 -->
+              <div class="mb-3">
+                <label class="form-label">
+                  <i class="fas fa-database me-2"></i>SQL方言
+                </label>
+                <select class="form-select" id="dbType" required>
+                  <option value="mysql">MySQL</option>
+                  <option value="postgres">PostgreSQL</option>
+                </select>
+                <div class="form-text">选择目标数据库类型以生成对应的SQL语句</div>
+              </div>
+
+              <!-- Website ID -->
+              <div class="mb-3">
+                <label class="form-label">
+                  <i class="fas fa-globe me-2"></i>目标 Website ID
+                </label>
+                <input type="text" class="form-control" id="websiteId"
+                  placeholder="例：01923022-a812-4369-b896-862fa37d32b1" required>
+                <div class="form-text">所有数据将使用此Website ID</div>
+              </div>
+
+              <div class="d-grid">
+                <button type="submit" class="btn btn-primary btn-lg">
+                  <i class="fas fa-code me-2"></i>生成SQL语句
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SQL结果显示区域 -->
+    <div id="sqlResults" class="d-none">
+      <div class="card shadow mt-4">
+        <div class="card-header bg-success text-white">
+          <h5 class="mb-0">
+            <i class="fas fa-check me-2"></i>生成的SQL语句
+          </h5>
+        </div>
+        <div class="card-body">
+          <div class="mb-3">
+            <div class="d-flex justify-content-between align-items-center">
+              <div id="sqlStats"></div>
+              <div>
+                <button class="btn btn-outline-primary btn-sm" onclick="downloadSQL()">
+                  <i class="fas fa-download me-2"></i>下载SQL文件
+                </button>
+                <button class="btn btn-outline-secondary btn-sm" onclick="copySQL()">
+                  <i class="fas fa-copy me-2"></i>复制到剪贴板
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-light p-3 rounded">
+            <pre id="sqlContent" style="max-height: 400px; overflow-y: auto; font-size: 0.875rem;"></pre>
+          </div>
+
+          <div class="mt-3">
+            <div class="alert alert-info">
+              <h6><i class="fas fa-info-circle me-2"></i>使用说明：</h6>
+              <ol class="mb-0">
+                <li>复制上面生成的SQL语句</li>
+                <li>连接到您的Umami数据库</li>
+                <li>执行这些SQL语句导入数据</li>
+                <li>建议在执行前备份数据库</li>
+              </ol>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const fileInfo = {{ file_info| tojson }};
+    let generatedSQL = [];
+
+    document.getElementById('sqlForm').addEventListener('submit', function (e) {
+      e.preventDefault();
+
+      const dbType = document.getElementById('dbType').value;
+      const websiteId = document.getElementById('websiteId').value.trim();
+
+      if (!websiteId) {
+        alert('请输入Website ID');
+        return;
+      }
+
+      generateSQL(dbType, websiteId);
+    });
+
+    function generateSQL(dbType, websiteId) {
+      const button = document.querySelector('#sqlForm button');
+      const originalText = button.innerHTML;
+
+      button.disabled = true;
+      button.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>生成中...';
+
+      fetch('/import-lite', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          file_content: fileInfo.file_content,
+          website_id: websiteId,
+          db_type: dbType
+        })
+      })
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            displaySQL(data.sql_statements, data.stats);
+          } else {
+            alert('生成失败: ' + data.message);
+          }
+        })
+        .catch(error => {
+          alert('生成出错: ' + error.message);
+        })
+        .finally(() => {
+          button.disabled = false;
+          button.innerHTML = originalText;
+        });
+    }
+
+    function displaySQL(sqlStatements, stats) {
+      generatedSQL = sqlStatements;
+
+      document.getElementById('sqlStats').innerHTML = `
+                <small class="text-muted">
+                    共生成 ${stats.total_statements} 条语句 
+                    (Session: ${stats.session_count}, Events: ${stats.event_count})
+                </small>
+            `;
+
+      document.getElementById('sqlContent').textContent = sqlStatements.join('\n');
+      document.getElementById('sqlResults').classList.remove('d-none');
+
+      // 滚动到结果区域
+      document.getElementById('sqlResults').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function downloadSQL() {
+      if (generatedSQL.length === 0) return;
+
+      const content = generatedSQL.join('\n');
+      const blob = new Blob([content], { type: 'text/sql' });
+      const url = window.URL.createObjectURL(blob);
+
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'umami_import.sql';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+    }
+
+    function copySQL() {
+      if (generatedSQL.length === 0) return;
+
+      const content = generatedSQL.join('\n');
+      navigator.clipboard.writeText(content).then(() => {
+        // 临时显示复制成功
+        const btn = event.target.closest('button');
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-check me-2"></i>已复制';
+        btn.classList.add('btn-success');
+        btn.classList.remove('btn-outline-secondary');
+
+        setTimeout(() => {
+          btn.innerHTML = originalText;
+          btn.classList.remove('btn-success');
+          btn.classList.add('btn-outline-secondary');
+        }, 2000);
+      }).catch(() => {
+        alert('复制失败，请手动复制');
+      });
+    }
+  </script>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>

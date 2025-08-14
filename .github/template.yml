@@ -1,0 +1,32 @@
+# GitHub模板配置
+
+# 设置此仓库为模板
+template: true
+
+# 主题标签
+topics:
+  - umami
+  - csv-import
+  - data-migration
+  - flask
+  - web-app
+  - mysql
+  - postgresql
+  - vercel
+  - railway
+
+# 许可证
+license: MIT
+
+# 描述
+description: "🚀 Umami CSV数据导入工具 - 支持多种云端部署平台"
+
+# 主页
+homepage: "https://umami-csv-import.vercel.app"
+
+# 语言统计
+languages:
+  - Python
+  - HTML
+  - CSS
+  - JavaScript
