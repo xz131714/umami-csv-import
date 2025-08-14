@@ -38,7 +38,7 @@
     }
 
     .container {
-      max-width: 800px;
+      max-width: 1000px;
       margin: 0 auto;
       background: white;
       border-radius: 20px;
@@ -188,8 +188,8 @@
 
 <body>
   <div class="header">
-    <h1>🚀 Umami</h1>
-    <p class="subtitle">CSV数据导入工具</p>
+    <h1>🚀 Umami 数据导入助手</h1>
+    <p class="subtitle">快速、安全、专业的 CSV 数据迁移工具</p>
   </div>
 
   <div class="container">
@@ -218,7 +218,7 @@
         </div>
         <div class="form-group">
           <label for="port">端口</label>
-          <input type="number" id="port" name="port" placeholder="MySQL: 3306, PostgreSQL: 5432" required>
+          <input type="number" id="port" name="port" value="3306" placeholder="MySQL: 3306, PostgreSQL: 5432" required>
         </div>
       </div>
 
@@ -288,14 +288,14 @@
         const dbType = this.dataset.type;
         document.getElementById('db_type').value = dbType;
         
-        // 更新端口提示
+        // 更新端口值和提示
         const port = document.getElementById('port');
-        if (!port.value) {
-          if (dbType === 'mysql') {
-            port.placeholder = 'MySQL默认端口: 3306';
-          } else if (dbType === 'postgresql') {
-            port.placeholder = 'PostgreSQL默认端口: 5432';
-          }
+        if (dbType === 'mysql') {
+          port.value = '3306';
+          port.placeholder = 'MySQL默认端口: 3306';
+        } else if (dbType === 'postgresql') {
+          port.value = '5432';
+          port.placeholder = 'PostgreSQL默认端口: 5432';
         }
       });
     });
