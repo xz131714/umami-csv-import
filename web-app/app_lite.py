@@ -1,7 +1,7 @@
 # 轻量级版本 - 适合Vercel等Serverless平台
 # 不使用pandas/numpy，使用标准库处理CSV
 
-from flask import Flask, render_template, request, jsonify, flash, redirect, url_for
+from flask import Flask, render_template, request, jsonify, flash, redirect, url_for, session
 import csv
 import os
 import json
@@ -24,9 +24,76 @@ def allowed_file(filename):
 def index():
     return render_template('index.html')
 
+@app.route('/config')
+def config():
+    """数据库配置页面"""
+    return render_template('config.html')
+
+@app.route('/test_connection', methods=['POST'])
+def test_connection():
+    """模拟测试数据库连接 - 轻量版只做基本验证"""
+    try:
+        data = request.get_json()
+        
+        # 基本参数验证
+        required_fields = ['db_type', 'host', 'port', 'username', 'password', 'database']
+        for field in required_fields:
+            if not data.get(field):
+                return jsonify({'success': False, 'error': f'缺少必需参数: {field}'})
+        
+        # 轻量版不进行实际连接测试，只做格式验证
+        if data['db_type'] not in ['mysql', 'postgresql']:
+            return jsonify({'success': False, 'error': '不支持的数据库类型'})
+        
+        port = int(data['port'])
+        if port < 1 or port > 65535:
+            return jsonify({'success': False, 'error': '端口号无效'})
+        
+        return jsonify({'success': True, 'message': '配置验证通过（轻量版不进行实际连接测试）'})
+        
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/save_db_config', methods=['POST'])
+def save_db_config():
+    """保存数据库配置"""
+    try:
+        # 获取表单数据
+        config = {
+            'db_type': request.form.get('db_type'),
+            'host': request.form.get('host'),
+            'port': int(request.form.get('port')),
+            'username': request.form.get('username'),
+            'password': request.form.get('password'),
+            'database': request.form.get('database'),
+            'website_id': request.form.get('website_id'),
+            'clear_tables': bool(request.form.get('clear_tables'))
+        }
+        
+        # 验证配置
+        if not all([config['host'], config['username'], config['password'], config['database'], config['website_id']]):
+            flash('请填写所有必需的配置信息', 'error')
+            return redirect(url_for('config'))
+        
+        # 保存到session
+        session['db_config'] = config
+        flash('数据库配置保存成功！', 'success')
+        
+        return redirect(url_for('upload_file'))
+        
+    except Exception as e:
+        flash(f'保存配置失败: {str(e)}', 'error')
+        return redirect(url_for('config'))
+
 @app.route('/upload', methods=['GET', 'POST'])
 def upload_file():
     if request.method == 'POST':
+        # 检查数据库配置
+        db_config = session.get('db_config')
+        if not db_config:
+            flash('请先配置数据库连接信息', 'warning')
+            return redirect(url_for('config'))
+        
         if 'file' not in request.files:
             flash('没有选择文件', 'error')
             return redirect(request.url)

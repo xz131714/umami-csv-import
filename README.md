@@ -10,9 +10,9 @@
 
 | 平台 | 版本 | 特点 | 部署 |
 |------|------|------|------|
-| **Vercel** | 轻量版 | 免费、快速、SQL生成 | [![Deploy](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/YOUR_USERNAME/umami-csv-import) |
-| **Railway** | 完整版 | 免费试用、直连数据库 | [![Deploy](https://railway.app/button.svg)](https://railway.app/template/YOUR_ID) |
-| **Render** | 完整版 | 免费永久、自动SSL | [![Deploy](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/YOUR_USERNAME/umami-csv-import) |
+| **Vercel** | 轻量版 | 免费、快速、SQL生成 | [![Deploy](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/xz131714/umami-csv-import) |
+| **Railway** | 完整版 | 免费试用、直连数据库 | [![Deploy](https://railway.app/button.svg)](https://railway.app/new/template?template=https://github.com/xz131714/umami-csv-import) |
+| **Render** | 完整版 | 免费永久、自动SSL | [![Deploy](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/xz131714/umami-csv-import) |
 
 ### 📋 部署步骤
 1. **Fork此项目** 到您的GitHub账号

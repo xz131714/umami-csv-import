@@ -57,7 +57,7 @@
 6. **点击 Deploy**
 
 ### 一键部署按钮
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/YOUR_USERNAME/umami-csv-import/tree/main/web-app)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/xz131714/umami-csv-import/tree/main/web-app)
 
 ---
 
@@ -86,7 +86,7 @@
 6. **自动部署**
 
 ### 一键部署按钮
-[![Deploy on Railway](https://railway.app/button.svg)](https://railway.app/new/template?template=https://github.com/YOUR_USERNAME/umami-csv-import&referralCode=YOUR_CODE)
+[![Deploy on Railway](https://railway.app/button.svg)](https://railway.app/new/template?template=https://github.com/xz131714/umami-csv-import&referralCode=YOUR_CODE)
 
 ---
 
@@ -119,7 +119,7 @@
 7. **创建服务**
 
 ### 一键部署按钮
-[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/YOUR_USERNAME/umami-csv-import)
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/xz131714/umami-csv-import)
 
 ---
 

@@ -5,7 +5,7 @@ Umami CSV 数据导入工具 - Web版本
 基于Flask的Web应用程序，提供友好的用户界面
 """
 
-from flask import Flask, render_template, request, jsonify, flash, redirect, url_for
+from flask import Flask, render_template, request, jsonify, flash, redirect, url_for, session
 import pandas as pd
 import os
 import json
@@ -13,13 +13,16 @@ import tempfile
 from werkzeug.utils import secure_filename
 from datetime import datetime
 import sys
+import traceback
 
-# 导入原始的数据库连接和处理函数
-sys.path.append('..')
-from umami_universal_import import (
-    connect_to_mysql, connect_to_postgres, clean_dataframe_for_db,
-    get_table_columns, insert_data_batch, truncate_tables
-)
+# 导入数据库连接模块
+try:
+    import pymysql
+    import psycopg2
+    from psycopg2.extras import RealDictCursor
+except ImportError:
+    # 如果没有安装数据库驱动，继续运行但功能受限
+    pass
 
 app = Flask(__name__)
 app.secret_key = 'umami-csv-import-tool-2024'  # 在生产环境中请更改此密钥
@@ -33,15 +36,202 @@ def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
+def create_mysql_connection(host, port, user, password, database):
+    """创建MySQL连接"""
+    return pymysql.connect(
+        host=host,
+        port=port,
+        user=user,
+        password=password,
+        database=database,
+        charset='utf8mb4',
+        cursorclass=pymysql.cursors.DictCursor
+    )
+
+def create_postgres_connection(host, port, user, password, database):
+    """创建PostgreSQL连接"""
+    return psycopg2.connect(
+        host=host,
+        port=port,
+        user=user,
+        password=password,
+        database=database,
+        cursor_factory=RealDictCursor
+    )
+
+def get_table_columns(connection, table_name, db_type):
+    """获取表的列名"""
+    cursor = connection.cursor()
+    
+    if db_type == 'mysql':
+        cursor.execute(f"DESCRIBE {table_name}")
+        columns = [row['Field'] for row in cursor.fetchall()]
+    elif db_type == 'postgresql':
+        cursor.execute("""
+            SELECT column_name 
+            FROM information_schema.columns 
+            WHERE table_name = %s
+            ORDER BY ordinal_position
+        """, (table_name,))
+        columns = [row['column_name'] for row in cursor.fetchall()]
+    
+    cursor.close()
+    return columns
+
+def clean_dataframe_for_db(df):
+    """清理DataFrame以适合数据库插入"""
+    # 处理NaN值
+    df = df.fillna('')
+    
+    # 确保字符串列不会太长
+    for col in df.select_dtypes(include=['object']).columns:
+        df[col] = df[col].astype(str).str[:255]
+    
+    return df
+
+def insert_data_batch(connection, table_name, df, db_type):
+    """批量插入数据"""
+    if df.empty:
+        return 0
+    
+    cursor = connection.cursor()
+    
+    # 构建插入语句
+    columns = list(df.columns)
+    placeholders = ', '.join(['%s'] * len(columns))
+    column_names = ', '.join(columns)
+    
+    sql = f"INSERT INTO {table_name} ({column_names}) VALUES ({placeholders})"
+    
+    # 转换数据为元组列表
+    data = [tuple(row) for row in df.to_numpy()]
+    
+    # 批量插入
+    cursor.executemany(sql, data)
+    connection.commit()
+    
+    rows_inserted = cursor.rowcount
+    cursor.close()
+    return rows_inserted
+
+def truncate_tables(connection, db_type):
+    """清空数据表"""
+    cursor = connection.cursor()
+    
+    tables = ['website_event', 'session', 'website']
+    
+    try:
+        # 禁用外键检查
+        if db_type == 'mysql':
+            cursor.execute("SET FOREIGN_KEY_CHECKS = 0")
+        
+        # 清空表
+        for table in tables:
+            if db_type == 'mysql':
+                cursor.execute(f"TRUNCATE TABLE {table}")
+            elif db_type == 'postgresql':
+                cursor.execute(f"TRUNCATE TABLE {table} RESTART IDENTITY CASCADE")
+        
+        # 重新启用外键检查
+        if db_type == 'mysql':
+            cursor.execute("SET FOREIGN_KEY_CHECKS = 1")
+        
+        connection.commit()
+        
+    except Exception as e:
+        connection.rollback()
+        raise e
+    finally:
+        cursor.close()
+
 @app.route('/')
 def index():
     """主页"""
     return render_template('index.html')
 
+@app.route('/config')
+def config():
+    """数据库配置页面"""
+    return render_template('config.html')
+
+@app.route('/test_connection', methods=['POST'])
+def test_connection():
+    """测试数据库连接"""
+    try:
+        data = request.get_json()
+        
+        # 创建数据库连接
+        if data['db_type'] == 'mysql':
+            connection = create_mysql_connection(
+                host=data['host'],
+                port=int(data['port']),
+                user=data['username'],
+                password=data['password'],
+                database=data['database']
+            )
+        elif data['db_type'] == 'postgresql':
+            connection = create_postgres_connection(
+                host=data['host'],
+                port=int(data['port']),
+                user=data['username'],
+                password=data['password'],
+                database=data['database']
+            )
+        else:
+            return jsonify({'success': False, 'error': '不支持的数据库类型'})
+        
+        # 测试连接
+        cursor = connection.cursor()
+        cursor.execute("SELECT 1")
+        cursor.close()
+        connection.close()
+        
+        return jsonify({'success': True, 'message': '数据库连接成功'})
+        
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/save_db_config', methods=['POST'])
+def save_db_config():
+    """保存数据库配置"""
+    try:
+        # 获取表单数据
+        config = {
+            'db_type': request.form.get('db_type'),
+            'host': request.form.get('host'),
+            'port': int(request.form.get('port')),
+            'username': request.form.get('username'),
+            'password': request.form.get('password'),
+            'database': request.form.get('database'),
+            'website_id': request.form.get('website_id'),
+            'clear_tables': bool(request.form.get('clear_tables'))
+        }
+        
+        # 验证配置
+        if not all([config['host'], config['username'], config['password'], config['database'], config['website_id']]):
+            flash('请填写所有必需的配置信息', 'error')
+            return redirect(url_for('config'))
+        
+        # 保存到session
+        session['db_config'] = config
+        flash('数据库配置保存成功！', 'success')
+        
+        return redirect(url_for('upload_file'))
+        
+    except Exception as e:
+        flash(f'保存配置失败: {str(e)}', 'error')
+        return redirect(url_for('config'))
+
 @app.route('/upload', methods=['GET', 'POST'])
 def upload_file():
     """文件上传页面"""
     if request.method == 'POST':
+        # 检查数据库配置
+        db_config = session.get('db_config')
+        if not db_config:
+            flash('请先配置数据库连接信息', 'warning')
+            return redirect(url_for('config'))
+        
         # 检查是否有文件被上传
         if 'file' not in request.files:
             flash('没有选择文件', 'error')
@@ -91,13 +281,98 @@ def upload_file():
 def configure_import():
     """配置导入参数"""
     try:
+        # 从session获取数据库配置
+        db_config = session.get('db_config')
+        if not db_config:
+            return jsonify({
+                'success': False,
+                'error': '请先配置数据库连接'
+            })
+        
         data = request.get_json()
         
-        # 获取配置参数
-        db_type = data.get('db_type')
-        db_config = data.get('db_config')
-        website_id = data.get('website_id')
-        clear_tables = data.get('clear_tables', False)
+        # 获取上传的文件信息
+        file_path = data.get('file_path')
+        if not file_path or not os.path.exists(file_path):
+            return jsonify({
+                'success': False,
+                'error': '文件不存在或已过期'
+            })
+        
+        # 创建数据库连接
+        if db_config['db_type'] == 'mysql':
+            connection = create_mysql_connection(
+                host=db_config['host'],
+                port=db_config['port'],
+                user=db_config['username'],
+                password=db_config['password'],
+                database=db_config['database']
+            )
+        elif db_config['db_type'] == 'postgresql':
+            connection = create_postgres_connection(
+                host=db_config['host'],
+                port=db_config['port'],
+                user=db_config['username'],
+                password=db_config['password'],
+                database=db_config['database']
+            )
+        else:
+            return jsonify({
+                'success': False,
+                'error': '不支持的数据库类型'
+            })
+        
+        # 如果需要清空数据表
+        if db_config.get('clear_tables', False):
+            truncate_tables(connection, db_config['db_type'])
+        
+        # 读取CSV文件
+        df = pd.read_csv(file_path)
+        
+        # 数据处理和导入
+        tables = ['website_event', 'session']  # 根据需要调整
+        total_imported = 0
+        
+        for table in tables:
+            if table in df.columns or f'{table}_' in str(df.columns):
+                # 根据表名过滤相关列
+                table_columns = get_table_columns(connection, table, db_config['db_type'])
+                
+                # 这里需要根据实际的CSV结构来映射数据
+                # 简化版本：假设CSV列名与数据库列名匹配
+                table_df = df[df.columns.intersection(table_columns)]
+                
+                if not table_df.empty:
+                    # 分批处理大文件
+                    batch_size = 1000
+                    for i in range(0, len(table_df), batch_size):
+                        batch_df = table_df.iloc[i:i + batch_size]
+                        cleaned_df = clean_dataframe_for_db(batch_df)
+                        
+                        # 插入数据
+                        rows_inserted = insert_data_batch(connection, table, cleaned_df, db_config['db_type'])
+                        total_imported += rows_inserted
+        
+        connection.close()
+        
+        # 清理临时文件
+        try:
+            os.remove(file_path)
+        except:
+            pass
+        
+        return jsonify({
+            'success': True,
+            'message': f'数据导入完成！共导入 {total_imported} 条记录。',
+            'imported_count': total_imported
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': f'导入失败: {str(e)}',
+            'details': traceback.format_exc()
+        })
         file_path = data.get('file_path')
         
         # 验证必需参数
