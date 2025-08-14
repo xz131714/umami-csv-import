@@ -92,7 +92,7 @@ export async function onRequest(context) {
             <p>✅ SQL生成 - 正常</p>
         </div>
         
-        <a href="/functions/" class="back-link">← 返回首页</a>
+        <a href="/functions" class="back-link">← 返回首页</a>
     </div>
 </body>
 </html>`, {

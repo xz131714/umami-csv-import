@@ -76,7 +76,7 @@ export async function onRequest(context) {
             </div>
         </form>
         
-        <a href="/functions/" class="back-link">← 返回首页</a>
+        <a href="/functions" class="back-link">← 返回首页</a>
     </div>
 </body>
 </html>`, {
@@ -162,7 +162,7 @@ INSERT INTO umami.website_event (
         </ul>
         
         <a href="/functions/upload" class="back-link">← 上传其他文件</a>
-        <a href="/functions/" class="back-link">← 返回首页</a>
+        <a href="/functions" class="back-link">← 返回首页</a>
     </div>
 </body>
 </html>`, {
