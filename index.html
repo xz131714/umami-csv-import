@@ -170,28 +170,28 @@
       <div class="form-row">
         <div class="form-group">
           <label for="host">主机地址</label>
-          <input type="text" id="host" name="host" value="localhost" required>
+          <input type="text" id="host" name="host" placeholder="例如: localhost 或 your-host.com" required>
         </div>
         <div class="form-group">
           <label for="port">端口</label>
-          <input type="number" id="port" name="port" value="3306" required>
+          <input type="number" id="port" name="port" placeholder="MySQL: 3306, PostgreSQL: 5432" required>
         </div>
       </div>
 
       <div class="form-row">
         <div class="form-group">
           <label for="username">用户名</label>
-          <input type="text" id="username" name="username" required>
+          <input type="text" id="username" name="username" placeholder="数据库用户名" required>
         </div>
         <div class="form-group">
           <label for="password">密码</label>
-          <input type="password" id="password" name="password" required>
+          <input type="password" id="password" name="password" placeholder="数据库密码" required>
         </div>
       </div>
 
       <div class="form-group">
         <label for="database">数据库名</label>
-        <input type="text" id="database" name="database" required>
+        <input type="text" id="database" name="database" placeholder="例如: umami" required>
       </div>
 
       <h3 style="margin: 30px 0 20px 0; color: #2c3e50;">CSV文件配置</h3>
@@ -199,7 +199,7 @@
       <div class="form-row">
         <div class="form-group">
           <label for="csv_filename">CSV文件名</label>
-          <input type="text" id="csv_filename" name="csv_filename" placeholder="file.csv" value="file.csv" required>
+          <input type="text" id="csv_filename" name="csv_filename" placeholder="例如: data.csv" required>
         </div>
         <div class="form-group">
           <label for="csv_encoding">文件编码</label>
@@ -213,9 +213,8 @@
 
       <div class="form-group">
         <label for="website_id">目标Website ID</label>
-        <input type="text" id="website_id" name="website_id" placeholder="01923022-a812-4369-b896-862fa37d32b1"
-          value="01923022-a812-4369-b896-862fa37d32b1">
-        <small style="color: #666; font-size: 0.9rem;">所有导入的数据将替换为此Website ID</small>
+        <input type="text" id="website_id" name="website_id" placeholder="例如: 01923022-a812-4369-b896-862fa37d32b1">
+        <small style="color: #666; font-size: 0.9rem;">所有导入的数据将替换为此Website ID（可选）</small>
       </div>
 
       <div style="text-align: center; margin-top: 40px;">
@@ -237,10 +236,13 @@
     document.querySelectorAll('input[name="db_type"]').forEach(radio => {
       radio.addEventListener('change', function () {
         const port = document.getElementById('port');
-        if (this.value === 'mysql') {
-          port.value = '3306';
-        } else if (this.value === 'postgresql') {
-          port.value = '5432';
+        // 只在端口为空时自动填充
+        if (!port.value) {
+          if (this.value === 'mysql') {
+            port.placeholder = 'MySQL默认端口: 3306';
+          } else if (this.value === 'postgresql') {
+            port.placeholder = 'PostgreSQL默认端口: 5432';
+          }
         }
       });
     });
@@ -306,8 +308,8 @@ POSTGRES_CONFIG = {
 }
 
 # 文件配置
-CSV_FILE_PATH = '${config.csv_filename}'  # CSV文件路径
-REPLACEMENT_WEBSITE_ID = '${config.website_id || '01923022-a812-4369-b896-862fa37d32b1'}'  # 目标website_id
+CSV_FILE_PATH = '${config.csv_filename || 'your_data.csv'}'  # CSV文件路径
+REPLACEMENT_WEBSITE_ID = '${config.website_id || 'your-website-id-here'}'  # 目标website_id
 
 # =============================================================================
 # 数据库连接函数
