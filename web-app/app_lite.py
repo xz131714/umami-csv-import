@@ -12,7 +12,7 @@ import sys
 import io
 
 app = Flask(__name__)
-app.secret_key = 'umami-csv-import-tool-2024'
+app.secret_key = os.environ.get('SECRET_KEY', 'umami-csv-import-tool-2024-vercel-dev')
 app.config['MAX_CONTENT_LENGTH'] = 10 * 1024 * 1024  # 10MB for serverless
 
 ALLOWED_EXTENSIONS = {'csv', 'txt'}
